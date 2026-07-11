@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" href="favi.png">
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Mac Note</title>
+</head>
+<body class="preload">
+<!-- 상단 툴바 ---------------------- -->
+<div class="tb">
+    <div class="l">
+        <label for=""><div class="top-time"></div></label>
+    </div>
+    <div class="c">
+        <div class="btn-new-bx" onclick="newBox()">
+            <!-- <i>+</i> -->
+            <span>+</span>
+            <!-- <i class="fa-solid fa-plus add-bx-icon">+</i> -->
+        </div>
+    </div>
+    <div class="r">
+        <label for="ww-door">widget</label> 
+        <div onclick="toggleRw()">set</div>
+        <label 
+            for="top_user_cb" 
+            class="top_user-btn-box">
+            <i class="fa-solid fa-user"></i>
+        </label>
+    </div>
+</div>
+<!-- 좌우 히든 윈도우 ---------------------- -->
+<input type="checkbox" id="ww-door" class="dpnone">
+<input type="checkbox" id="top_user_cb" class="dpnone">
+
+<div class="lw-back" id="lw-back" onclick="closeSidebar()"></div>
+<div class="rw-back" id="rw-back" onclick="closeRw()"></div>
+<label class="ww-back" for="ww-door"></label>
+<label class="top_user-back" for="top_user_cb"></label>
+
+<div class="lw" id="lw">
+    <div class="lw-inner">
+        <!-- 검색 + 뷰 전환 -->
+        <div class="lw-head">
+            <div class="lw-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="검색..." oninput="lwSearch(this.value)">
+            </div>
+            <div class="lw-view-btns">
+                <button id="lw-btn-list" class="lw-view-btn active" onclick="lwSetView('list')" title="목록 보기">
+                    <i class="fa-solid fa-list"></i>
+                </button>
+                <button id="lw-btn-block" class="lw-view-btn" onclick="lwSetView('block')" title="블록 보기">
+                    <i class="fa-solid fa-grip"></i>
+                </button>
+                <button id="lw-pin-btn" class="lw-pin-btn" onclick="togglePin()" title="사이드바 고정">
+                    <i class="fa-solid fa-thumbtack"></i>
+                </button>
+            </div>
+        </div>
+        <!-- 섹션 헤더 -->
+        <div class="lw-section-title">메모들</div>
+        <!-- 메모 목록 -->
+        <div class="lw-list" id="lw-list"></div>
+        <!-- 새 메모 버튼 -->
+        <button class="lw-new-btn" onclick="newBox(); renderSidebar();">
+            <i class="fa-solid fa-plus"></i> 새 메모
+        </button>
+    </div>
+</div>
+<button class="btn lw-handle" onclick="toggleSidebar()"><i class="fas fa-angle-right"></i></button>
+<div class="rw" id="rw">
+    <div class="rw-inner">
+        <div class="rw-head">
+            <span class="rw-title">설정</span>
+        </div>
+        <div class="rw-section-title">테마</div>
+        <div class="rw-theme-row">
+            <button class="rw-theme-btn" id="btn-theme-light" onclick="setTheme('light')">
+                <i class="fa-solid fa-sun"></i>
+                <span>라이트</span>
+            </button>
+            <button class="rw-theme-btn" id="btn-theme-auto" onclick="setTheme('auto')">
+                <i class="fa-solid fa-circle-half-stroke"></i>
+                <span>자동</span>
+            </button>
+            <button class="rw-theme-btn" id="btn-theme-dark" onclick="setTheme('dark')">
+                <i class="fa-solid fa-moon"></i>
+                <span>다크</span>
+            </button>
+        </div>
+        <div class="rw-section-title">배경 이미지</div>
+        <div class="rw-bg-row">
+            <button class="rw-bg-btn" id="btn-bg-open" onclick="openBgModal()">
+                <i class="fa-regular fa-image"></i>
+                <span>배경 설정 열기</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="bg-modal-back" id="bg-modal-back" onclick="closeBgModal()"></div>
+<section class="bg-modal" id="bg-modal" aria-label="배경 이미지 설정">
+    <div class="bg-modal-head">
+        <div class="bg-modal-tabs">
+            <button class="bg-tab-btn active" id="bg-tab-library" onclick="switchBgTab('library')">라이브러리</button>
+            <button class="bg-tab-btn" id="bg-tab-upload" onclick="switchBgTab('upload')">업로드</button>
+            <button class="bg-tab-btn" id="bg-tab-link" onclick="switchBgTab('link')">링크</button>
+        </div>
+        <button class="bg-close-btn" onclick="closeBgModal()">닫기</button>
+    </div>
+
+    <div class="bg-tab-panel bg-tab-panel--library" id="bg-panel-library">
+        <input
+            type="text"
+            id="bg-library-search"
+            class="bg-search-input"
+            placeholder="라이브러리 이미지 검색"
+            oninput="renderBgLibrary(this.value)">
+        <div class="bg-grid" id="bg-library-grid"></div>
+    </div>
+
+    <div class="bg-tab-panel dpnone" id="bg-panel-upload">
+        <div class="bg-upload-help">이미지 파일을 선택하면 바로 배경에 적용되고, 앱 내부(IndexedDB)에 저장됩니다.</div>
+        <input type="file" id="bg-upload-input" accept="image/*" onchange="handleBgUpload(event)">
+    </div>
+
+    <div class="bg-tab-panel dpnone" id="bg-panel-link">
+        <input
+            type="text"
+            id="bg-link-input"
+            class="bg-search-input"
+            placeholder="https://example.com/image.jpg">
+        <div class="bg-link-actions">
+            <button class="bg-action-btn" onclick="applyBgLink()">링크 적용</button>
+        </div>
+    </div>
+
+    <div class="bg-modal-foot">
+        <button class="bg-remove-btn" onclick="clearCustomBackground()">제거</button>
+    </div>
+</section>
+<label class="ww" for="ww-door">
+    <div class="contanier">
+        <form action="https://www.google.com/search" method="GET" target="blank" class="searchbar search-google">
+            <label for="google-toggle" class="search-icon">
+                <i class="fa-brands fa-google search-site-icon"></i>
+            </label>
+            <input type="text" id="google-input" name="q" placeholder="Google 검색">
+            <button class="search-icon search-submit google-submit">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+    </div>
+</label>
+<!-- 메인 앱 화면 ---------------------- -->
+<main id="main">
+    <div class="ws"></div>
+    <div class="bs" onclick="bsClick()"></div>
+</main>
+<!-- <footer></footer> -->
+
+<!-- 스크립트 ---------------------- -->
+
+<script>
+    // 초기 로드 트렌지션 해제
+    const body = () => {document.body.removeClass('preload')}
+    //
+    
+</script>
+<script src="js/toolbar.js"></script>
+<script src="js/box-ctrl.js"></script>
+<script src="js/app.js"></script>
+<script src="js/box.js"></script>
+<script src="js/sidebar.js"></script>
+
+<script src="https://kit.fontawesome.com/e4704dcbbd.js" crossorigin="anonymous"></script>
+</body>
+</html>
