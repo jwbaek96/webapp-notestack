@@ -15,7 +15,7 @@ function newBox() {
         left: Length*15+30+'px',
         statu: 'response',
         name: 'title',
-        showTitle: true,
+        showTitle: false,
     }; 
     bxArr.push(nbxObj);
     addNewBox(nbxObj); // 새로운 앱 요소 생성 및 추가
@@ -85,11 +85,11 @@ function addNewBox(obj) {
                 <span class="bx-title">${obj.name !== 'title' ? obj.name : ''}</span>
             </div>
         </div>
-        <label for="txt${ID}" class="bx-main" id="main${ID}">
+        <div class="bx-main" id="main${ID}">
             <div class="bx-txt">
-                <textarea class="app-txt" id="txt${ID}" oninput="apptext(this.value, ${ID})" spellcheck="false"></textarea>
+                <div class="app-editor" id="txt${ID}"></div>
             </div>
-        </label>
+        </div>
     </section>
     `;
     bs.appendChild(bx);
@@ -99,9 +99,13 @@ function addNewBox(obj) {
         text:1,
         linkContent:[],
         taskContent:[],
-        textContent: ""
+        textContent: "",
+        blocks: [{ type: 'text', text: '' }]
     }
     localStorage.setItem(`${ID}`,JSON.stringify(bxObj));   
+    if (typeof initMemoEditor === 'function') {
+        initMemoEditor(ID);
+    }
     
     // 헤더 제목 업데이트 (첫 줄이 보이도록) + 사이드바 업데이트
     setTimeout(() => {
@@ -229,7 +233,6 @@ function printBx(obj){
 
     const localBX = localStorage.getItem(ID);
     const BX = JSON.parse(localBX);
-    const txt = BX.textContent;
     const linkArr = BX.linkContent;
     const taskArr = BX.taskContent;
 
@@ -276,11 +279,11 @@ function printBx(obj){
                 <span class="bx-title">${obj.name !== 'title' ? obj.name : ''}</span>
             </div>
         </div>
-        <label for="txt${ID}" class="bx-main" id="main${ID}">
+        <div class="bx-main" id="main${ID}">
             <div class="bx-txt">
-                <textarea class="app-txt" id="txt${ID}" oninput="apptext(this.value, ${ID})" spellcheck="false">${txt}</textarea>
+                <div class="app-editor" id="txt${ID}"></div>
             </div>
-        </label>
+        </div>
     </section>
     `;
 
@@ -294,15 +297,11 @@ function printBx(obj){
     if (typeof applyTitleVisibility === 'function') {
         applyTitleVisibility(ID);
     }
-    TextResize(ID);
+    if (typeof initMemoEditor === 'function') {
+        initMemoEditor(ID);
+    }
     // bxF(ID,statu);
     
-}
-function TextResize(ID) {
-    let textarea = document.getElementById(`txt${ID}`);
-    let scHeight = textarea.scrollHeight;
-    // let borderTop = parseInt(style.borderTop);
-    textarea.style.height = scHeight + "px";
 }
 // 페이지 로드 시 복원
 function loadBox() {
@@ -336,7 +335,7 @@ function migrateBxArr(arr) {
             favorite: obj.favorite ?? false,    // null-coalescing
             alwaysTop: obj.alwaysTop ?? false,
             locked: obj.locked ?? false,
-            showTitle: obj.showTitle ?? true,
+            showTitle: obj.showTitle ?? false,
         };
     });
 }

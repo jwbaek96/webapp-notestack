@@ -428,8 +428,12 @@ function getDisplayTitle(ID) {
         try {
             const obj = JSON.parse(textData);
             if (obj.textContent) {
-                const firstLine = obj.textContent.split('\n')[0].trim();
-                return firstLine || '제목 없음';
+              const firstLine = obj.textContent.split('\n')[0].trim();
+              const cleaned = firstLine
+                .replace(/^\s*-\s*\[[ xX]\]\s*/, '')
+                .replace(/^\s*[☐☑]\s*/, '')
+                .trim();
+              return cleaned || '제목 없음';
             }
         } catch (e) {
             console.error('getDisplayTitle parse error:', e);

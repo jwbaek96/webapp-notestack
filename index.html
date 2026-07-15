@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -7,12 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <title>Mac Note</title>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:DeletedSystemTags msdt:dt="string"></mso:DeletedSystemTags>
+<mso:TagListTags msdt:dt="string"></mso:TagListTags>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
 </head>
 <body class="preload">
 <!-- 상단 툴바 ---------------------- -->
 <div class="tb">
     <div class="l">
-        <label for=""><div class="top-time"></div></label>
+        <div class="tb-clock-wrap" id="tb-clock-wrap">
+            <button class="tb-clock-btn" id="clock-trigger" onclick="toggleMiniCalendar()">
+                <div class="top-time"></div>
+            </button>
+            <div class="mini-calendar" id="mini-calendar"></div>
+        </div>
     </div>
     <div class="c">
         <div class="btn-new-bx" onclick="newBox()">
@@ -22,7 +34,7 @@
         </div>
     </div>
     <div class="r">
-        <label for="ww-door">widget</label> 
+        <div onclick="toggleWw()">widget</div>
         <div onclick="toggleRw()">set</div>
         <label 
             for="top_user_cb" 
@@ -32,12 +44,11 @@
     </div>
 </div>
 <!-- 좌우 히든 윈도우 ---------------------- -->
-<input type="checkbox" id="ww-door" class="dpnone">
 <input type="checkbox" id="top_user_cb" class="dpnone">
 
 <div class="lw-back" id="lw-back" onclick="closeSidebar()"></div>
 <div class="rw-back" id="rw-back" onclick="closeRw()"></div>
-<label class="ww-back" for="ww-door"></label>
+<div class="ww-back" id="ww-back" onclick="closeWw()"></div>
 <label class="top_user-back" for="top_user_cb"></label>
 
 <div class="lw" id="lw">
@@ -142,19 +153,66 @@
         <button class="bg-remove-btn" onclick="clearCustomBackground()">제거</button>
     </div>
 </section>
-<label class="ww" for="ww-door">
-    <div class="contanier">
-        <form action="https://www.google.com/search" method="GET" target="blank" class="searchbar search-google">
-            <label for="google-toggle" class="search-icon">
-                <i class="fa-brands fa-google search-site-icon"></i>
-            </label>
-            <input type="text" id="google-input" name="q" placeholder="Google 검색">
-            <button class="search-icon search-submit google-submit">
-                <i class="fa-solid fa-magnifying-glass"></i>
+<div class="ww">
+    <div class="contanier widget-search-container">
+        <div class="widget-panel-head">
+            <span class="widget-panel-title">위젯</span>
+        </div>
+
+        <div class="widget-section-head">
+            <span class="widget-section-title">검색 바</span>
+            <button
+                type="button"
+                class="widget-settings-btn"
+                id="widget-settings-btn"
+                onclick="toggleWidgetSettings()"
+                aria-label="검색바 설정"
+                aria-expanded="false">
+                <i class="fa-solid fa-gear"></i>
             </button>
-        </form>
+            <div class="widget-settings-panel" id="widget-settings-panel">
+                <div class="widget-settings-title">검색바 설정</div>
+                <div class="widget-settings-list" id="widget-settings-list"></div>
+            </div>
+        </div>
+
+        <div class="widget-carousel-viewport" id="widget-carousel-viewport">
+            <div class="widget-carousel-track" id="widget-carousel-track">
+                <div class="widget-slide" data-engine="google">
+                    <form action="https://www.google.com/search" method="GET" target="_blank" class="searchbar widget-searchbar widget-searchbar-google">
+                        <div class="search-icon"><i class="fa-brands fa-google"></i></div>
+                        <input type="text" name="q" placeholder="">
+                        <button type="submit" class="search-icon search-submit widget-search-submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="widget-slide" data-engine="naver">
+                    <form action="https://search.naver.com/search.naver" method="GET" target="_blank" class="searchbar widget-searchbar widget-searchbar-naver">
+                        <div class="search-icon"><span class="naver-mark">N</span></div>
+                        <input type="text" name="query" placeholder="">
+                        <button type="submit" class="search-icon search-submit widget-search-submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="widget-slide" data-engine="youtube">
+                    <form action="https://www.youtube.com/results" method="GET" target="_blank" class="searchbar widget-searchbar widget-searchbar-youtube">
+                        <div class="search-icon"><i class="fa-brands fa-youtube"></i></div>
+                        <input type="text" name="search_query" placeholder="">
+                        <button type="submit" class="search-icon search-submit widget-search-submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="widget-dots" id="widget-dots"></div>
     </div>
-</label>
+</div>
 <!-- 메인 앱 화면 ---------------------- -->
 <main id="main">
     <div class="ws"></div>
@@ -171,10 +229,10 @@
     
 </script>
 <script src="js/toolbar.js"></script>
-<script src="js/box-ctrl.js"></script>
-<script src="js/app.js"></script>
-<script src="js/box.js"></script>
-<script src="js/sidebar.js"></script>
+<script src="js/box-ctrl.js?v=20260715b"></script>
+<script src="js/app.js?v=20260715b"></script>
+<script src="js/box.js?v=20260715b"></script>
+<script src="js/sidebar.js?v=20260715b"></script>
 
 <script src="https://kit.fontawesome.com/e4704dcbbd.js" crossorigin="anonymous"></script>
 </body>

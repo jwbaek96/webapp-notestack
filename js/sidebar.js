@@ -71,7 +71,13 @@ function renderSidebar() {
         const data = raw ? JSON.parse(raw) : {};
         const title = getDisplayTitle(obj.id);
         const preview = data.textContent
-            ? data.textContent.replace(/\n/g, ' ').slice(0, 55)
+            ? data.textContent
+                .replace(/\n/g, ' ')
+                .replace(/\s*-\s*\[[ xX]\]\s*/g, ' ')
+                .replace(/[☐☑]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 55)
             : '';
 
         const item = document.createElement('div');
@@ -143,6 +149,7 @@ function toggleRw() {
 function openRw() {
     // lw가 열려있으면 닫기
     closeSidebar(true);
+    closeWw();
     document.getElementById('rw').classList.add('open');
     document.getElementById('rw-back').classList.add('open');
     pushPanelHistory();
@@ -151,6 +158,24 @@ function openRw() {
 function closeRw() {
     document.getElementById('rw').classList.remove('open');
     document.getElementById('rw-back').classList.remove('open');
+}
+
+function toggleWw() {
+    const ww = document.querySelector('.ww');
+    ww.classList.contains('open') ? closeWw() : openWw();
+}
+
+function openWw() {
+    closeSidebar(true);
+    closeRw();
+    document.querySelector('.ww').classList.add('open');
+    document.getElementById('ww-back').classList.add('open');
+    pushPanelHistory();
+}
+
+function closeWw() {
+    document.querySelector('.ww').classList.remove('open');
+    document.getElementById('ww-back').classList.remove('open');
 }
 
 // =============================================
@@ -390,6 +415,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('bg-modal').classList.contains('open')) { closeBgModal(); return; }
     const checkedDoor = document.querySelector('.bx-set-door:checked');
     if (checkedDoor) { checkedDoor.checked = false; return; }
+    if (document.querySelector('.ww').classList.contains('open')) { closeWw(); return; }
     if (document.getElementById('rw').classList.contains('open')) { closeRw(); return; }
     if (document.getElementById('lw').classList.contains('open')) { closeSidebar(true); return; }
 });
@@ -406,6 +432,7 @@ window.addEventListener('popstate', () => {
     if (document.getElementById('bg-modal').classList.contains('open')) { closeBgModal(); return; }
     const checkedDoor = document.querySelector('.bx-set-door:checked');
     if (checkedDoor) { checkedDoor.checked = false; return; }
+    if (document.querySelector('.ww').classList.contains('open')) { closeWw(); return; }
     if (document.getElementById('rw').classList.contains('open')) { closeRw(); return; }
     if (document.getElementById('lw').classList.contains('open')) { closeSidebar(true); return; }
 });
