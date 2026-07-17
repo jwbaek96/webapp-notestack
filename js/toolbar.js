@@ -106,6 +106,10 @@ function toggleMiniCalendar() {
 function closeMiniCalendar() {
     if (!miniCalendarEl) return;
     miniCalendarEl.classList.remove('open');
+
+    const now = new Date();
+    miniCalState.year = now.getFullYear();
+    miniCalState.month = now.getMonth();
 }
 
 function changeMiniCalendarMonth(delta) {
@@ -391,3 +395,15 @@ initWidgetSwipe();
 initWidgetSearchClear();
 initWidgetSettings();
 setWidgetSlide(0);
+
+if (clockWrapEl) {
+    clockWrapEl.addEventListener('click', e => {
+        e.stopPropagation();
+    });
+}
+
+if (miniCalendarEl) {
+    miniCalendarEl.addEventListener('click', e => {
+        e.stopPropagation();
+    });
+}

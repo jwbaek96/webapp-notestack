@@ -172,6 +172,13 @@ function saveMemoFromDom(ID) {
     const store = getMemoStore(ID);
     store.blocks = blocks;
     saveMemoStore(ID, store);
+    if (typeof touchMemoUpdatedAt === 'function') {
+        touchMemoUpdatedAt(ID);
+        saveBxArr();
+    }
+    if (typeof renderMemoMeta === 'function') {
+        renderMemoMeta(ID);
+    }
     updateMemoTitleAndSidebar(ID);
 }
 

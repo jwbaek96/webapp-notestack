@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" href="favi.png">
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=20260717c">
     <title>Mac Note</title>
 
 <!--[if gte mso 9]><xml>
@@ -57,37 +57,45 @@
         <div class="lw-head">
             <div class="lw-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="검색..." oninput="lwSearch(this.value)">
+                <input type="text" placeholder="" oninput="lwSearch(this.value)">
             </div>
             <div class="lw-view-btns">
-                <button id="lw-btn-list" class="lw-view-btn active" onclick="lwSetView('list')" title="목록 보기">
-                    <i class="fa-solid fa-list"></i>
+                <button id="lw-settings-btn" class="lw-view-btn" onclick="toggleLwSettings()" title="좌측 패널 설정" aria-expanded="false">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
-                <button id="lw-btn-block" class="lw-view-btn" onclick="lwSetView('block')" title="블록 보기">
-                    <i class="fa-solid fa-grip"></i>
-                </button>
-                <button id="lw-pin-btn" class="lw-pin-btn" onclick="togglePin()" title="사이드바 고정">
+                <button id="lw-pin-btn" class="lw-view-btn lw-pin-btn" onclick="togglePin()" title="사이드바 고정">
                     <i class="fa-solid fa-thumbtack"></i>
                 </button>
+                <div class="lw-settings-panel" id="lw-settings-panel">
+                    <div class="lw-settings-title">목록 표시 설정</div>
+                    <div class="lw-settings-row" onclick="toggleLwPreview()">
+                        <span class="lw-settings-label">내용 미리보기</span>
+                        <button id="lw-preview-toggle" class="lw-settings-toggle" onclick="event.stopPropagation(); toggleLwPreview()" aria-pressed="true"></button>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- 섹션 헤더 -->
         <div class="lw-section-title">메모들</div>
         <!-- 메모 목록 -->
         <div class="lw-list" id="lw-list"></div>
-        <!-- 새 메모 버튼 -->
-        <button class="lw-new-btn" onclick="newBox(); renderSidebar();">
-            <i class="fa-solid fa-plus"></i> 새 메모
-        </button>
+        <div class="lw-create-actions">
+            <button class="lw-new-btn" onclick="sidebarNewMemo()">
+                <i class="fa-solid fa-plus"></i> 새 메모
+            </button>
+            <button class="lw-new-btn lw-new-folder-btn" onclick="sidebarNewFolder()">
+                <i class="fa-regular fa-folder"></i> 새 폴더
+            </button>
+        </div>
     </div>
 </div>
 <button class="btn lw-handle" onclick="toggleSidebar()"><i class="fas fa-angle-right"></i></button>
 <div class="rw" id="rw">
     <div class="rw-inner">
         <div class="rw-head">
-            <span class="rw-title">설정</span>
+            <span class="rw-title">settings</span>
         </div>
-        <div class="rw-section-title">테마</div>
+        <div class="rw-section-title">theme</div>
         <div class="rw-theme-row">
             <button class="rw-theme-btn" id="btn-theme-light" onclick="setTheme('light')">
                 <i class="fa-solid fa-sun"></i>
@@ -102,7 +110,7 @@
                 <span>다크</span>
             </button>
         </div>
-        <div class="rw-section-title">배경 이미지</div>
+        <div class="rw-section-title">background image</div>
         <div class="rw-bg-row">
             <button class="rw-bg-btn" id="btn-bg-open" onclick="openBgModal()">
                 <i class="fa-regular fa-image"></i>
@@ -156,11 +164,11 @@
 <div class="ww">
     <div class="contanier widget-search-container">
         <div class="widget-panel-head">
-            <span class="widget-panel-title">위젯</span>
+            <span class="widget-panel-title">widget</span>
         </div>
 
         <div class="widget-section-head">
-            <span class="widget-section-title">검색 바</span>
+            <span class="widget-section-title">search bar</span>
             <button
                 type="button"
                 class="widget-settings-btn"
@@ -229,10 +237,10 @@
     
 </script>
 <script src="js/toolbar.js"></script>
-<script src="js/box-ctrl.js?v=20260715b"></script>
-<script src="js/app.js?v=20260715b"></script>
-<script src="js/box.js?v=20260715b"></script>
-<script src="js/sidebar.js?v=20260715b"></script>
+<script src="js/box-ctrl.js?v=20260717g"></script>
+<script src="js/app.js?v=20260717c"></script>
+<script src="js/box.js?v=20260717d"></script>
+<script src="js/sidebar.js?v=20260717f"></script>
 
 <script src="https://kit.fontawesome.com/e4704dcbbd.js" crossorigin="anonymous"></script>
 </body>

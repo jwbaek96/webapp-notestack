@@ -1,29 +1,78 @@
 const bs = document.querySelector('.bs');
 let currentBoxResizeObserver;
+let mobileActiveBoxId = null;
 // -- 박스 만들기
 let bxArr = [];//전체 박스 정보저장
+
+function isMobileViewport() {
+    return window.matchMedia('(max-width: 500px)').matches;
+}
+
+function pickTopVisibleBoxId() {
+    const visible = bxArr
+        .filter(obj => !obj.hidden)
+        .sort((a, b) => (b.zindex || 0) - (a.zindex || 0));
+    return visible.length ? visible[0].id : null;
+}
+
+function applyMobileMemoLayout(preferredId = null) {
+    const boxes = document.querySelectorAll('.bx');
+    const mobile = isMobileViewport();
+
+    if (!mobile) {
+        boxes.forEach(box => box.classList.remove('mobile-active'));
+        return;
+    }
+
+    const requestedId = preferredId ?? mobileActiveBoxId;
+    const requestedObj = bxArr.find(obj => obj.id === requestedId && !obj.hidden);
+    const activeId = requestedObj ? requestedObj.id : pickTopVisibleBoxId();
+    mobileActiveBoxId = activeId;
+
+    boxes.forEach(box => {
+        const id = parseInt(box.dataset.group, 10);
+        box.classList.toggle('mobile-active', activeId !== null && id === activeId);
+    });
+}
 
 function newBox() {
     const Length = bxArr.length;
     const z = Length+1;
+    const defaultWidth = 300;
+    const defaultHeight = 200;
+    const boardWidth = bs ? bs.clientWidth : window.innerWidth;
+    const boardHeight = bs ? bs.clientHeight : window.innerHeight;
+    const centeredLeft = Math.max(0, Math.round((boardWidth - defaultWidth) / 2));
+    const centeredTop = Math.max(0, Math.round((boardHeight - defaultHeight) / 2));
     const nbxObj = {
         id: Date.now(),
         zindex: z,
-        width: 300,
-        height: 200,
-        top: Length*30+30+'px',
-        left: Length*15+30+'px',
+        width: defaultWidth,
+        height: defaultHeight,
+        top: `${centeredTop}px`,
+        left: `${centeredLeft}px`,
         statu: 'response',
         name: 'title',
         showTitle: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        hidden: false,
     }; 
     bxArr.push(nbxObj);
     addNewBox(nbxObj); // 새로운 앱 요소 생성 및 추가
     saveBxArr(); // appsArr 저장
+    if (isMobileViewport()) {
+        if (typeof closeSidebar === 'function') closeSidebar(true);
+        if (typeof closeRw === 'function') closeRw();
+        if (typeof closeWw === 'function') closeWw();
+    }
+    applyMobileMemoLayout(nbxObj.id);
     if (typeof renderSidebar === 'function') renderSidebar();
     const bxs = document.querySelectorAll(".bx");
     bxs.forEach(function(bx){
       bx.querySelector('.bx-set-door').checked = false;})
+
+    return nbxObj.id;
 }
 
 function saveBxArr() {localStorage.setItem('bxArr', JSON.stringify(bxArr));}
@@ -52,28 +101,44 @@ function addNewBox(obj) {
                     value="${obj.name !== 'title' ? obj.name : ''}"
                     oninput="bxSetTitle(${ID}, this.value)">
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxToggleTitleVisibility(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-heading"></i>제목 표시</span>
-                <button class="bx-set-tgl${obj.showTitle !== false ? ' active' : ''}" id="bxShowTitle${ID}" onclick="bxToggleTitleVisibility(${ID})"></button>
+                <button class="bx-set-tgl${obj.showTitle !== false ? ' active' : ''}" id="bxShowTitle${ID}" onclick="event.stopPropagation(); bxToggleTitleVisibility(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxFavorite(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-star"></i>즐겨찾기</span>
-                <button class="bx-set-tgl${obj.favorite ? ' active' : ''}" id="bxFav${ID}" onclick="bxFavorite(${ID})"></button>
+                <button class="bx-set-tgl${obj.favorite ? ' active' : ''}" id="bxFav${ID}" onclick="event.stopPropagation(); bxFavorite(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxAlwaysTop(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-angles-up"></i>최상위</span>
-                <button class="bx-set-tgl${obj.alwaysTop ? ' active' : ''}" id="bxTop${ID}" onclick="bxAlwaysTop(${ID})"></button>
+                <button class="bx-set-tgl${obj.alwaysTop ? ' active' : ''}" id="bxTop${ID}" onclick="event.stopPropagation(); bxAlwaysTop(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxLock(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-lock"></i>위치 고정</span>
-                <button class="bx-set-tgl${obj.locked ? ' active' : ''}" id="bxLock${ID}" onclick="bxLock(${ID})"></button>
+                <button class="bx-set-tgl${obj.locked ? ' active' : ''}" id="bxLock${ID}" onclick="event.stopPropagation(); bxLock(${ID})"></button>
+            </div>
+            <div class="bx-set-meta" id="bxMeta${ID}">
+                <div class="bx-set-meta-line bx-set-meta-line--folder" onclick="toggleMemoFolderPicker(${ID}, event)"><span class="k">폴더</span><span class="v" id="bxMetaFolder${ID}">-</span></div>
+                <div class="bx-folder-picker" id="bxFolderPicker${ID}"></div>
+                <div class="bx-set-meta-line"><span class="k">생성</span><span class="v" id="bxMetaCreated${ID}">-</span></div>
+                <div class="bx-set-meta-line"><span class="k">수정</span><span class="v" id="bxMetaUpdated${ID}">-</span></div>
             </div>
         </div>
     </section>
     <section class="bx-ctrl" id="ctrl${ID}">
         <button class="tool bx-x" id="bxX${ID}" onclick="bxX(${ID})"></button>
-        <button class="tool bx-m" id="bxM${ID}"></button>
+        <button class="tool bx-m${obj.hidden ? ' active' : ''}" id="bxM${ID}" onclick="bxM(${ID})"></button>
         <button class="tool bx-f" id="bxF${ID}" onclick="bxF(${ID},this.value)" value="${statu}"></button>
+    </section>
+    <section class="bx-delete-confirm" id="bxDelConfirm${ID}" onclick="bxXCancel(${ID})">
+        <div class="bx-delete-confirm-card" onclick="event.stopPropagation()">
+            <div class="bx-delete-confirm-title">메모를 삭제할까요?</div>
+            <div class="bx-delete-confirm-desc">삭제한 메모는 복구할 수 없습니다.</div>
+            <div class="bx-delete-confirm-actions">
+                <button class="bx-delete-btn bx-delete-btn-cancel" onclick="bxXCancel(${ID})">취소</button>
+                <button class="bx-delete-btn bx-delete-btn-danger" onclick="bxXConfirm(${ID})">삭제</button>
+            </div>
+        </div>
     </section>
     <div class="bx-bar" id="bar${ID}" data-group="${ID}" onmousedown="boxDragging('bx${ID}',${ID})"></div>
     <label for="door${ID}" class="bx-door">
@@ -100,12 +165,17 @@ function addNewBox(obj) {
         linkContent:[],
         taskContent:[],
         textContent: "",
-        blocks: [{ type: 'text', text: '' }]
+        blocks: [{ type: 'text', text: '' }],
+        hidden: false
     }
     localStorage.setItem(`${ID}`,JSON.stringify(bxObj));   
     if (typeof initMemoEditor === 'function') {
         initMemoEditor(ID);
     }
+    if (typeof renderMemoMeta === 'function') {
+        renderMemoMeta(ID);
+    }
+    applyMobileMemoLayout(ID);
     
     // 헤더 제목 업데이트 (첫 줄이 보이도록) + 사이드바 업데이트
     setTimeout(() => {
@@ -246,28 +316,44 @@ function printBx(obj){
                     value="${obj.name !== 'title' ? obj.name : ''}"
                     oninput="bxSetTitle(${ID}, this.value)">
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxToggleTitleVisibility(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-heading"></i>제목 표시</span>
-                <button class="bx-set-tgl${obj.showTitle !== false ? ' active' : ''}" id="bxShowTitle${ID}" onclick="bxToggleTitleVisibility(${ID})"></button>
+                <button class="bx-set-tgl${obj.showTitle !== false ? ' active' : ''}" id="bxShowTitle${ID}" onclick="event.stopPropagation(); bxToggleTitleVisibility(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxFavorite(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-star"></i>즐겨찾기</span>
-                <button class="bx-set-tgl${obj.favorite ? ' active' : ''}" id="bxFav${ID}" onclick="bxFavorite(${ID})"></button>
+                <button class="bx-set-tgl${obj.favorite ? ' active' : ''}" id="bxFav${ID}" onclick="event.stopPropagation(); bxFavorite(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxAlwaysTop(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-angles-up"></i>최상위</span>
-                <button class="bx-set-tgl${obj.alwaysTop ? ' active' : ''}" id="bxTop${ID}" onclick="bxAlwaysTop(${ID})"></button>
+                <button class="bx-set-tgl${obj.alwaysTop ? ' active' : ''}" id="bxTop${ID}" onclick="event.stopPropagation(); bxAlwaysTop(${ID})"></button>
             </div>
-            <div class="bx-set-row bx-set-toggle-row">
+            <div class="bx-set-row bx-set-toggle-row" onclick="if(event.target.closest('button')) return; bxLock(${ID})">
                 <span class="bx-set-label"><i class="fa-solid fa-lock"></i>위치 고정</span>
-                <button class="bx-set-tgl${obj.locked ? ' active' : ''}" id="bxLock${ID}" onclick="bxLock(${ID})"></button>
+                <button class="bx-set-tgl${obj.locked ? ' active' : ''}" id="bxLock${ID}" onclick="event.stopPropagation(); bxLock(${ID})"></button>
+            </div>
+            <div class="bx-set-meta" id="bxMeta${ID}">
+                <div class="bx-set-meta-line bx-set-meta-line--folder" onclick="toggleMemoFolderPicker(${ID}, event)"><span class="k">폴더</span><span class="v" id="bxMetaFolder${ID}">-</span></div>
+                <div class="bx-folder-picker" id="bxFolderPicker${ID}"></div>
+                <div class="bx-set-meta-line"><span class="k">생성</span><span class="v" id="bxMetaCreated${ID}">-</span></div>
+                <div class="bx-set-meta-line"><span class="k">수정</span><span class="v" id="bxMetaUpdated${ID}">-</span></div>
             </div>
         </div>
     </section>
     <section class="bx-ctrl" id="ctrl${ID}">
         <button class="tool bx-x" id="bxX${ID}" onclick="bxX(${ID})"></button>
-        <button class="tool bx-m" id="bxM${ID}"></button>
+        <button class="tool bx-m${obj.hidden ? ' active' : ''}" id="bxM${ID}" onclick="bxM(${ID})"></button>
         <button class="tool bx-f" id="bxF${ID}" onclick="bxF(${ID},this.value)" value="${statu}"></button>
+    </section>
+    <section class="bx-delete-confirm" id="bxDelConfirm${ID}" onclick="bxXCancel(${ID})">
+        <div class="bx-delete-confirm-card" onclick="event.stopPropagation()">
+            <div class="bx-delete-confirm-title">메모를 삭제할까요?</div>
+            <div class="bx-delete-confirm-desc">삭제한 메모는 복구할 수 없습니다.</div>
+            <div class="bx-delete-confirm-actions">
+                <button class="bx-delete-btn bx-delete-btn-cancel" onclick="bxXCancel(${ID})">취소</button>
+                <button class="bx-delete-btn bx-delete-btn-danger" onclick="bxXConfirm(${ID})">삭제</button>
+            </div>
+        </div>
     </section>
     <div class="bx-bar" id="bar${ID}" data-group="${ID}" onmousedown="boxDragging('bx${ID}',${ID})"></div>
     <label for="door${ID}" class="bx-door">
@@ -300,6 +386,13 @@ function printBx(obj){
     if (typeof initMemoEditor === 'function') {
         initMemoEditor(ID);
     }
+    if (typeof applyHiddenState === 'function') {
+        applyHiddenState(ID);
+    }
+    if (typeof renderMemoMeta === 'function') {
+        renderMemoMeta(ID);
+    }
+    applyMobileMemoLayout();
     // bxF(ID,statu);
     
 }
@@ -319,6 +412,7 @@ function loadBox() {
                 }
             });
         }, 100);
+        applyMobileMemoLayout();
         // console.log(bxArr);
     }
 }
@@ -336,7 +430,12 @@ function migrateBxArr(arr) {
             alwaysTop: obj.alwaysTop ?? false,
             locked: obj.locked ?? false,
             showTitle: obj.showTitle ?? false,
+            hidden: obj.hidden ?? false,
         };
     });
 }
 loadBox()
+
+window.addEventListener('resize', () => {
+    applyMobileMemoLayout();
+});
