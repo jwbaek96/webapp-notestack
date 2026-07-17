@@ -38,8 +38,8 @@ function applyMobileMemoLayout(preferredId = null) {
 function newBox() {
     const Length = bxArr.length;
     const z = Length+1;
-    const defaultWidth = 300;
-    const defaultHeight = 200;
+    const defaultWidth = 380;
+    const defaultHeight = 350;
     const boardWidth = bs ? bs.clientWidth : window.innerWidth;
     const boardHeight = bs ? bs.clientHeight : window.innerHeight;
     const centeredLeft = Math.max(0, Math.round((boardWidth - defaultWidth) / 2));

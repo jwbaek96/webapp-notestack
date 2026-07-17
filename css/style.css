@@ -80,7 +80,7 @@ input, select, textarea{
 --bx-bodr-c:rgba(217, 217, 217, 0.066);
 --bx-bodr:1px solid var(--bx-bodr-c);
 
---bx-box-shdw-1: 0 5px 10px 0 rgba(203, 203, 203, 0.283);
+--bx-box-shdw-1: 0px 1px 10px 0 rgb(156 156 156 / 20%);
 --bx-box-shdw-inset-1: 5px 3px 10px -2px rgba(240, 240, 240, 0.796) inset;
 
 --bx-apps-bgc:#fff;
