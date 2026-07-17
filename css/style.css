@@ -402,11 +402,11 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
 }
 
 .widget-settings-item.drop-before{
-    border-top-color: #8a89ff;
+    border-top-color: #ababc38e;
 }
 
 .widget-settings-item.drop-after{
-    border-bottom-color: #8a89ff;
+    border-bottom-color: #ababc38e;
 }
 
 .widget-settings-item-label{
@@ -703,7 +703,7 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     display: flex; align-items: center; justify-content: center;
     transition: background .15s, color .15s;
     &:hover { background: rgba(255,255,255,0.1); color: #ccc; }
-    &.active { background: rgba(255,255,255,0.13); color: #fff; }
+    &.active { background: rgba(255,255,255,0); color: #fff; }
 }
 /* 핀 버튼 */
 .lw-pin-btn{
@@ -831,11 +831,13 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
 }
 
 .lw-list-item.drop-before{
-    box-shadow: inset 0 2px 0 #8a89ff;
+    border-radius: 0 0 7px 7px;
+    box-shadow: inset 0 2px 0px #ababc38e;
 }
 
 .lw-list-item.drop-after{
-    box-shadow: inset 0 -2px 0 #8a89ff;
+    border-radius: 7px 7px 0 0;
+    box-shadow: inset 0 -2px 0px #ababc38e;
 }
 
 .lw-list-item.drop-inside{
@@ -1040,9 +1042,87 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     border-color: #ff5f57;
     color: #fff;
 }
+
+.lw-folder-name-back{
+    position: fixed;
+    inset: 0;
+    z-index: 261;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(2px);
+}
+
+.lw-folder-name-modal{
+    width: min(340px, calc(100vw - 24px));
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(27, 26, 35, 0.97);
+    color: #e6e6ef;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.35);
+    padding: 14px;
+}
+
+.lw-folder-name-title{
+    font-size: .9em;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.lw-folder-name-input{
+    width: 100%;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06);
+    color: #ececf5;
+    padding: 0 10px;
+    font-size: .82em;
+}
+
+.lw-folder-name-actions{
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.lw-folder-name-btn{
+    min-width: 58px;
+    height: 30px;
+    border-radius: 8px;
+    font-size: .76em;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #e9e9ef;
+}
+
+.lw-folder-name-btn-cancel{
+    background: rgba(255,255,255,0.08);
+}
+
+.lw-folder-name-btn-ok{
+    background: rgba(124,111,255,0.9);
+    border-color: rgba(124,111,255,0.95);
+    color: #fff;
+}
+
+body.is-dragging-memo,
+body.is-dragging-memo *{
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: grabbing !important;
+}
+
+body.is-resizing-memo,
+body.is-resizing-memo *{
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
 /* 포커스 하이라이트 */
 .bx.lw-focus-highlight{
-    box-shadow: 0 0 0 2px #7c6fff, 0 5px 20px rgba(124,111,255,0.3) !important;
+    box-shadow: 0 0 0 2px #5647ff50, 0 5px 20px rgba(124,111,255,0.3) !important;
     transition: box-shadow .3s ease;
 }
 /* 우측 설정 사이드바 내부 ------------------------------- */
@@ -1494,6 +1574,10 @@ body.theme-dark {
     .lw-settings-panel {
         right: 0;
         width: min(240px, calc(100vw - 24px));
+    }
+    
+    .bx.lw-focus-highlight {
+        box-shadow: none !important;
     }
 
     main > .bs > .bx {
