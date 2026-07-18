@@ -21,6 +21,36 @@ let lwDragState = {
 };
 let lwSuppressClickUntil = 0;
 
+function isPinnedLeftOpen() {
+    const lw = document.getElementById('lw');
+    if (!lw || !lwPinned) return false;
+    if (typeof isMobileViewport === 'function' && isMobileViewport()) return false;
+    return lw.classList.contains('open');
+}
+
+function updateRightBackdropsOffset() {
+    const rwBack = document.getElementById('rw-back');
+    const wwBack = document.getElementById('ww-back');
+    const lw = document.getElementById('lw');
+
+    let offset = 0;
+    if (isPinnedLeftOpen() && lw) {
+        const rect = lw.getBoundingClientRect();
+        offset = Math.max(0, Math.round(rect.right));
+    }
+
+    [rwBack, wwBack].forEach(back => {
+        if (!back) return;
+        if (offset > 0) {
+            back.style.left = `${offset}px`;
+            back.style.width = '';
+        } else {
+            back.style.left = '';
+            back.style.width = '';
+        }
+    });
+}
+
 const BG_DB_NAME = 'macnote-assets';
 const BG_DB_VERSION = 1;
 const BG_STORE = 'backgrounds';
@@ -356,8 +386,75 @@ function toggleFolderCollapsed(folderId) {
     renderSidebar();
 }
 
-function sidebarNewFolder() {
-    const raw = prompt('폴더 이름을 입력하세요', '새 폴더');
+function askFolderName(options = {}) {
+    return new Promise(resolve => {
+        const {
+            title = '폴더 이름',
+            placeholder = '새 폴더',
+            initialValue = '',
+            okLabel = '확인'
+        } = options;
+
+        const prev = document.getElementById('lw-folder-name-back');
+        if (prev) prev.remove();
+
+        const back = document.createElement('div');
+        back.id = 'lw-folder-name-back';
+        back.className = 'lw-folder-name-back';
+        back.innerHTML = `
+            <div class="lw-folder-name-modal" role="dialog" aria-modal="true" aria-label="${title}" onclick="event.stopPropagation()">
+                <div class="lw-folder-name-title">${title}</div>
+                <input type="text" id="lw-folder-name-input" class="lw-folder-name-input" placeholder="${placeholder}" value="${initialValue.replace(/"/g, '&quot;')}">
+                <div class="lw-folder-name-actions">
+                    <button class="lw-folder-name-btn lw-folder-name-btn-cancel" id="lw-folder-name-cancel">취소</button>
+                    <button class="lw-folder-name-btn lw-folder-name-btn-ok" id="lw-folder-name-ok">${okLabel}</button>
+                </div>
+            </div>
+        `;
+
+        const close = (value) => {
+            back.remove();
+            resolve(value);
+        };
+
+        back.addEventListener('click', () => close(null));
+        back.querySelector('#lw-folder-name-cancel')?.addEventListener('click', () => close(null));
+        back.querySelector('#lw-folder-name-ok')?.addEventListener('click', () => {
+            const value = back.querySelector('#lw-folder-name-input')?.value ?? '';
+            close(value);
+        });
+
+        const input = back.querySelector('#lw-folder-name-input');
+        if (input) {
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    back.querySelector('#lw-folder-name-ok')?.click();
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    close(null);
+                }
+            });
+        }
+
+        document.body.appendChild(back);
+        requestAnimationFrame(() => {
+            const i = document.getElementById('lw-folder-name-input');
+            if (!i) return;
+            i.focus();
+            i.select();
+        });
+    });
+}
+
+async function sidebarNewFolder() {
+    const raw = await askFolderName({
+        title: '새 폴더 만들기',
+        placeholder: '폴더 이름',
+        initialValue: '새 폴더',
+        okLabel: '만들기'
+    });
     if (raw === null) return;
     const name = raw.trim() || '새 폴더';
     const id = `f_${Date.now()}`;
@@ -373,10 +470,15 @@ function sidebarNewFolder() {
     renderSidebar();
 }
 
-function sidebarRenameFolder(folderId) {
+async function sidebarRenameFolder(folderId) {
     const folder = lwTree.folders[folderId];
     if (!folder) return;
-    const raw = prompt('폴더 이름 변경', folder.name || '새 폴더');
+    const raw = await askFolderName({
+        title: '폴더 이름 수정',
+        placeholder: '폴더 이름',
+        initialValue: folder.name || '새 폴더',
+        okLabel: '저장'
+    });
     if (raw === null) return;
     folder.name = raw.trim() || '새 폴더';
     saveLwTree();
@@ -491,6 +593,7 @@ function openSidebar() {
 
     document.getElementById('lw').classList.add('open');
     document.getElementById('lw-back').classList.toggle('open', !lwPinned);
+    updateRightBackdropsOffset();
     document.querySelector('.lw-handle').classList.add('open');
     closeLwSettings();
     renderSidebar();
@@ -501,6 +604,7 @@ function closeSidebar(force = false) {
     if (lwPinned && !force && !(typeof isMobileViewport === 'function' && isMobileViewport())) return;
     document.getElementById('lw').classList.remove('open');
     document.getElementById('lw-back').classList.remove('open');
+    updateRightBackdropsOffset();
     document.querySelector('.lw-handle').classList.remove('open');
     closeLwSettings();
 }
@@ -571,6 +675,7 @@ function togglePin() {
     if (lwPinned) {
         // 고정 시에는 백드롭을 비활성화
         lwBack.classList.remove('open');
+        updateRightBackdropsOffset();
         return;
     }
 
@@ -578,6 +683,7 @@ function togglePin() {
     if (lw && lw.classList.contains('open')) {
         lwBack.classList.add('open');
     }
+    updateRightBackdropsOffset();
 }
 
 function renderSidebar() {
@@ -798,9 +904,11 @@ function toggleRw() {
 }
 
 function openRw() {
-    // lw가 열려있으면 닫기
-    closeSidebar(true);
+    if (!isPinnedLeftOpen()) {
+        closeSidebar(true);
+    }
     closeWw();
+    updateRightBackdropsOffset();
     document.getElementById('rw').classList.add('open');
     document.getElementById('rw-back').classList.add('open');
     pushPanelHistory();
@@ -809,6 +917,7 @@ function openRw() {
 function closeRw() {
     document.getElementById('rw').classList.remove('open');
     document.getElementById('rw-back').classList.remove('open');
+    updateRightBackdropsOffset();
 }
 
 function toggleWw() {
@@ -817,8 +926,11 @@ function toggleWw() {
 }
 
 function openWw() {
-    closeSidebar(true);
+    if (!isPinnedLeftOpen()) {
+        closeSidebar(true);
+    }
     closeRw();
+    updateRightBackdropsOffset();
     document.querySelector('.ww').classList.add('open');
     document.getElementById('ww-back').classList.add('open');
     pushPanelHistory();
@@ -827,6 +939,7 @@ function openWw() {
 function closeWw() {
     document.querySelector('.ww').classList.remove('open');
     document.getElementById('ww-back').classList.remove('open');
+    updateRightBackdropsOffset();
 }
 
 // =============================================
@@ -1055,6 +1168,11 @@ loadBackgroundSetting();
 loadLwSettings();
 loadLwTree();
 updateLwSettingsUi();
+updateRightBackdropsOffset();
+
+window.addEventListener('resize', () => {
+    updateRightBackdropsOffset();
+});
 
 document.addEventListener('click', e => {
     const panel = document.getElementById('lw-settings-panel');
@@ -1080,7 +1198,7 @@ document.addEventListener('keydown', e => {
     if (checkedDoor) { checkedDoor.checked = false; return; }
     if (document.querySelector('.ww').classList.contains('open')) { closeWw(); return; }
     if (document.getElementById('rw').classList.contains('open')) { closeRw(); return; }
-    if (document.getElementById('lw').classList.contains('open')) { closeSidebar(true); return; }
+    if (document.getElementById('lw').classList.contains('open')) { closeSidebar(); return; }
 });
 
 // bx-set 패널 열릴 때 history 추가
@@ -1097,5 +1215,5 @@ window.addEventListener('popstate', () => {
     if (checkedDoor) { checkedDoor.checked = false; return; }
     if (document.querySelector('.ww').classList.contains('open')) { closeWw(); return; }
     if (document.getElementById('rw').classList.contains('open')) { closeRw(); return; }
-    if (document.getElementById('lw').classList.contains('open')) { closeSidebar(true); return; }
+    if (document.getElementById('lw').classList.contains('open')) { closeSidebar(); return; }
 });

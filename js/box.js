@@ -141,6 +141,14 @@ function addNewBox(obj) {
         </div>
     </section>
     <div class="bx-bar" id="bar${ID}" data-group="${ID}" onmousedown="boxDragging('bx${ID}',${ID})"></div>
+    <div class="bx-rz bx-rz-n" onmousedown="boxResizeStart('bx${ID}',${ID},'n')" ontouchstart="boxResizeStart('bx${ID}',${ID},'n')"></div>
+    <div class="bx-rz bx-rz-s" onmousedown="boxResizeStart('bx${ID}',${ID},'s')" ontouchstart="boxResizeStart('bx${ID}',${ID},'s')"></div>
+    <div class="bx-rz bx-rz-e" onmousedown="boxResizeStart('bx${ID}',${ID},'e')" ontouchstart="boxResizeStart('bx${ID}',${ID},'e')"></div>
+    <div class="bx-rz bx-rz-w" onmousedown="boxResizeStart('bx${ID}',${ID},'w')" ontouchstart="boxResizeStart('bx${ID}',${ID},'w')"></div>
+    <div class="bx-rz bx-rz-ne" onmousedown="boxResizeStart('bx${ID}',${ID},'ne')" ontouchstart="boxResizeStart('bx${ID}',${ID},'ne')"></div>
+    <div class="bx-rz bx-rz-nw" onmousedown="boxResizeStart('bx${ID}',${ID},'nw')" ontouchstart="boxResizeStart('bx${ID}',${ID},'nw')"></div>
+    <div class="bx-rz bx-rz-se" onmousedown="boxResizeStart('bx${ID}',${ID},'se')" ontouchstart="boxResizeStart('bx${ID}',${ID},'se')"></div>
+    <div class="bx-rz bx-rz-sw" onmousedown="boxResizeStart('bx${ID}',${ID},'sw')" ontouchstart="boxResizeStart('bx${ID}',${ID},'sw')"></div>
     <label for="door${ID}" class="bx-door">
         <i class="fa-solid fa-ellipsis-vertical"></i>
     </label>
@@ -180,7 +188,9 @@ function addNewBox(obj) {
     // 헤더 제목 업데이트 (첫 줄이 보이도록) + 사이드바 업데이트
     setTimeout(() => {
         const titleEl = document.querySelector(`#hdr${ID} .bx-title`);
-        if (titleEl && typeof getDisplayTitle === 'function') {
+        if (titleEl && typeof getHeaderDisplayTitle === 'function') {
+            titleEl.textContent = getHeaderDisplayTitle(ID);
+        } else if (titleEl && typeof getDisplayTitle === 'function') {
             titleEl.textContent = getDisplayTitle(ID);
         }
         if (typeof applyTitleVisibility === 'function') {
@@ -356,6 +366,14 @@ function printBx(obj){
         </div>
     </section>
     <div class="bx-bar" id="bar${ID}" data-group="${ID}" onmousedown="boxDragging('bx${ID}',${ID})"></div>
+    <div class="bx-rz bx-rz-n" onmousedown="boxResizeStart('bx${ID}',${ID},'n')" ontouchstart="boxResizeStart('bx${ID}',${ID},'n')"></div>
+    <div class="bx-rz bx-rz-s" onmousedown="boxResizeStart('bx${ID}',${ID},'s')" ontouchstart="boxResizeStart('bx${ID}',${ID},'s')"></div>
+    <div class="bx-rz bx-rz-e" onmousedown="boxResizeStart('bx${ID}',${ID},'e')" ontouchstart="boxResizeStart('bx${ID}',${ID},'e')"></div>
+    <div class="bx-rz bx-rz-w" onmousedown="boxResizeStart('bx${ID}',${ID},'w')" ontouchstart="boxResizeStart('bx${ID}',${ID},'w')"></div>
+    <div class="bx-rz bx-rz-ne" onmousedown="boxResizeStart('bx${ID}',${ID},'ne')" ontouchstart="boxResizeStart('bx${ID}',${ID},'ne')"></div>
+    <div class="bx-rz bx-rz-nw" onmousedown="boxResizeStart('bx${ID}',${ID},'nw')" ontouchstart="boxResizeStart('bx${ID}',${ID},'nw')"></div>
+    <div class="bx-rz bx-rz-se" onmousedown="boxResizeStart('bx${ID}',${ID},'se')" ontouchstart="boxResizeStart('bx${ID}',${ID},'se')"></div>
+    <div class="bx-rz bx-rz-sw" onmousedown="boxResizeStart('bx${ID}',${ID},'sw')" ontouchstart="boxResizeStart('bx${ID}',${ID},'sw')"></div>
     <label for="door${ID}" class="bx-door">
         <i class="fa-solid fa-ellipsis-vertical"></i>
     </label>
@@ -407,7 +425,9 @@ function loadBox() {
         setTimeout(() => {
             bxArr.forEach(obj => {
                 const titleEl = document.querySelector(`#hdr${obj.id} .bx-title`);
-                if (titleEl && typeof getDisplayTitle === 'function') {
+                if (titleEl && typeof getHeaderDisplayTitle === 'function') {
+                    titleEl.textContent = getHeaderDisplayTitle(obj.id);
+                } else if (titleEl && typeof getDisplayTitle === 'function') {
                     titleEl.textContent = getDisplayTitle(obj.id);
                 }
             });

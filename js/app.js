@@ -1,4 +1,6 @@
 // 박스 앱 - 블록 에디터(텍스트 + 체크리스트)
+const MEMO_PLACEHOLDER = '\u200B';
+
 function createDefaultMemoStore() {
     return {
         link: 0,
@@ -97,6 +99,38 @@ function saveMemoStore(ID, store) {
     localStorage.setItem(ID, JSON.stringify(next));
 }
 
+function cleanMemoText(text) {
+    return (text || '').replace(/\u200B/g, '').replace(/\r/g, '');
+}
+
+function getMemoLineText(line) {
+    if (!line) return '';
+    const clone = line.cloneNode(true);
+    clone.querySelectorAll('.app-line-check').forEach(el => el.remove());
+    return cleanMemoText(clone.textContent || '');
+}
+
+function isMemoEditorStructureDirty(editor) {
+    if (!editor) return false;
+
+    return Array.from(editor.querySelectorAll('.app-line')).some(line => {
+        const contents = line.querySelectorAll('.app-line-content');
+        if (contents.length !== 1) return true;
+
+        const content = contents[0];
+        if (content.children.length > 0) return true;
+
+        return Array.from(line.childNodes).some(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return cleanMemoText(node.textContent || '').trim() !== '';
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return false;
+            const el = node;
+            return !el.classList.contains('app-line-content') && !el.classList.contains('app-line-check');
+        });
+    });
+}
+
 function getCaretOffset(el) {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return 0;
@@ -137,6 +171,18 @@ function setCaretOffset(el, offset) {
     sel.addRange(range);
 }
 
+function focusContentElement(el, offset = 'end') {
+    if (!el) return;
+    const editor = el.closest('.app-editor');
+    if (!editor) return;
+    editor.focus();
+    if (offset === 'end') {
+        setCaretOffset(el, (el.textContent || '').length);
+        return;
+    }
+    setCaretOffset(el, offset);
+}
+
 function updateMemoTitleAndSidebar(ID) {
     const bxObj = bxArr.find(b => b.id === ID);
     if (bxObj && (!bxObj.name || bxObj.name === 'title' || bxObj.name === '')) {
@@ -145,7 +191,9 @@ function updateMemoTitleAndSidebar(ID) {
     }
 
     const titleEl = document.querySelector(`#hdr${ID} .bx-title`);
-    if (titleEl && typeof getDisplayTitle === 'function') {
+    if (titleEl && typeof getHeaderDisplayTitle === 'function') {
+        titleEl.textContent = getHeaderDisplayTitle(ID);
+    } else if (titleEl && typeof getDisplayTitle === 'function') {
         titleEl.textContent = getDisplayTitle(ID);
     }
 
@@ -160,8 +208,7 @@ function saveMemoFromDom(ID) {
 
     const blocks = Array.from(editor.querySelectorAll('.app-line')).map(line => {
         const type = line.dataset.type === 'task' ? 'task' : 'text';
-        const contentEl = line.querySelector('.app-line-content');
-        const text = contentEl ? (contentEl.textContent || '').replace(/\r/g, '') : '';
+        const text = getMemoLineText(line);
         if (type === 'task') {
             const checkEl = line.querySelector('.app-line-check');
             return { type: 'task', checked: !!(checkEl && checkEl.checked), text };
@@ -185,28 +232,150 @@ function saveMemoFromDom(ID) {
 function focusMemoLine(ID, index, offset = 0) {
     const el = document.querySelector(`#txt${ID} .app-line[data-index="${index}"] .app-line-content`);
     if (!el) return;
-    el.focus();
-    if (offset === 'end') {
-        setCaretOffset(el, (el.textContent || '').length);
+    focusContentElement(el, offset);
+}
+
+const memoScrollbarTimers = new Map();
+
+function showMemoThinScrollbar(ID, holdMs = 900) {
+    const main = document.getElementById(`main${ID}`);
+    if (!main) return;
+
+    if (main.scrollHeight <= main.clientHeight + 1) {
+        main.classList.remove('show-scrollbar');
         return;
     }
-    setCaretOffset(el, offset);
+
+    main.classList.add('show-scrollbar');
+    const oldTimer = memoScrollbarTimers.get(ID);
+    if (oldTimer) clearTimeout(oldTimer);
+
+    const timer = setTimeout(() => {
+        main.classList.remove('show-scrollbar');
+        memoScrollbarTimers.delete(ID);
+    }, holdMs);
+    memoScrollbarTimers.set(ID, timer);
 }
 
-function onMemoLineInput(ID) {
+function focusMemoEditorAtEnd(ID) {
+    const editor = document.getElementById(`txt${ID}`);
+    if (!editor) return;
+
+    const lines = editor.querySelectorAll('.app-line .app-line-content');
+    if (lines.length === 0) {
+        renderMemoEditor(ID);
+    }
+
+    const nextLines = editor.querySelectorAll('.app-line .app-line-content');
+    const target = nextLines[nextLines.length - 1] || nextLines[0];
+    if (!target) return;
+
+    focusContentElement(target, 'end');
+}
+
+function ensureEditorSelectionInContent(editor) {
+    const sel = window.getSelection();
+    if (!editor || !sel || sel.rangeCount === 0) return false;
+
+    const range = sel.getRangeAt(0);
+    if (!editor.contains(range.startContainer)) return false;
+
+    const currentLine = getLineFromNode(range.startContainer);
+    if (currentLine) {
+        const currentContent = currentLine.querySelector('.app-line-content');
+        if (currentContent && (currentContent === range.startContainer || currentContent.contains(range.startContainer))) {
+            return true;
+        }
+    }
+
+    const lines = editor.querySelectorAll('.app-line .app-line-content');
+    const fallback = lines[lines.length - 1] || lines[0];
+    if (!fallback) return false;
+    focusContentElement(fallback, 'end');
+    return true;
+}
+
+function bindMemoMainInteractions(ID) {
+    const main = document.getElementById(`main${ID}`);
+    if (!main) return;
+
+    if (!main.dataset.memoBound) {
+        main.addEventListener('click', e => {
+            if (e.target.closest('.app-line-content, .app-line-check')) return;
+            focusMemoEditorAtEnd(ID);
+        });
+
+        main.addEventListener('scroll', () => {
+            showMemoThinScrollbar(ID, 700);
+        }, { passive: true });
+
+        main.dataset.memoBound = '1';
+    }
+}
+
+function onMemoEditorInput(ID) {
+    const editor = document.getElementById(`txt${ID}`);
+    if (!editor) return;
     saveMemoFromDom(ID);
+    if (isMemoEditorStructureDirty(editor)) {
+        renderMemoEditor(ID);
+    }
 }
 
-function onMemoLineKeydown(e, ID) {
-    const content = e.currentTarget;
-    const line = content.closest('.app-line');
-    if (!line) return;
+function getLineFromNode(node) {
+    if (!node) return null;
+    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    return el ? el.closest('.app-line') : null;
+}
 
-    const idx = Number(line.dataset.index);
-    const full = content.textContent || '';
-    const caret = getCaretOffset(content);
+function getMemoEditorSelectionContext(editor) {
+    ensureEditorSelectionInContent(editor);
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
 
-    if (e.key === ' ') {
+    const range = sel.getRangeAt(0);
+    if (!editor.contains(range.startContainer)) return null;
+
+    const line = getLineFromNode(range.startContainer);
+    if (!line) return null;
+
+    const content = line.querySelector('.app-line-content');
+    if (!content) return null;
+
+    return {
+        selection: sel,
+        range,
+        line,
+        content,
+        index: Number(line.dataset.index),
+        caret: getCaretOffset(content),
+        collapsed: sel.isCollapsed
+    };
+}
+
+function replaceMemoBlocks(ID, blocks, focusIndex, focusOffset = 0) {
+    const store = getMemoStore(ID);
+    store.blocks = normalizeBlocks(blocks);
+    saveMemoStore(ID, store);
+    renderMemoEditor(ID);
+    if (typeof focusIndex === 'number') {
+        focusMemoLine(ID, focusIndex, focusOffset);
+    }
+}
+
+function onMemoEditorKeydown(e, ID) {
+    const editor = document.getElementById(`txt${ID}`);
+    if (!editor) return;
+
+    const ctx = getMemoEditorSelectionContext(editor);
+    if (!ctx) return;
+
+    const idx = ctx.index;
+    const raw = ctx.content.textContent || '';
+    const full = cleanMemoText(raw);
+    const caret = Math.min(ctx.caret, full.length);
+
+    if (e.key === ' ' && ctx.collapsed) {
         const before = full.slice(0, caret);
         const after = full.slice(caret);
         const match = before.match(/^(\s*)(\[\]|\[x\]|\[X\])$/);
@@ -219,15 +388,12 @@ function onMemoLineKeydown(e, ID) {
                 checked: match[2].toLowerCase() === '[x]',
                 text: ''
             };
-            store.blocks = blocks;
-            saveMemoStore(ID, store);
-            renderMemoEditor(ID);
-            focusMemoLine(ID, idx, 0);
+            replaceMemoBlocks(ID, blocks, idx, 0);
             return;
         }
     }
 
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && ctx.collapsed) {
         e.preventDefault();
         const left = full.slice(0, caret);
         const right = full.slice(caret);
@@ -238,10 +404,7 @@ function onMemoLineKeydown(e, ID) {
         // Empty checklist line + Enter => convert current line back to plain text.
         if (cur.type === 'task' && (full.trim() === '')) {
             blocks[idx] = { type: 'text', text: '' };
-            store.blocks = blocks;
-            saveMemoStore(ID, store);
-            renderMemoEditor(ID);
-            focusMemoLine(ID, idx, 0);
+            replaceMemoBlocks(ID, blocks, idx, 0);
             return;
         }
 
@@ -253,14 +416,11 @@ function onMemoLineKeydown(e, ID) {
         blocks[idx] = cur;
         blocks.splice(idx + 1, 0, nextBlock);
 
-        store.blocks = blocks;
-        saveMemoStore(ID, store);
-        renderMemoEditor(ID);
-        focusMemoLine(ID, idx + 1, 0);
+        replaceMemoBlocks(ID, blocks, idx + 1, 0);
         return;
     }
 
-    if (e.key === 'Backspace' && caret === 0) {
+    if (e.key === 'Backspace' && ctx.collapsed && caret === 0) {
         const store = getMemoStore(ID);
         const blocks = normalizeBlocks(store.blocks);
         const cur = blocks[idx];
@@ -269,10 +429,7 @@ function onMemoLineKeydown(e, ID) {
 
         e.preventDefault();
         blocks.splice(idx, 1);
-        store.blocks = blocks;
-        saveMemoStore(ID, store);
-        renderMemoEditor(ID);
-        focusMemoLine(ID, idx - 1, 'end');
+        replaceMemoBlocks(ID, blocks, idx - 1, 'end');
     }
 }
 
@@ -299,6 +456,7 @@ function buildMemoLine(ID, block, index) {
         check.type = 'checkbox';
         check.className = 'app-line-check';
         check.checked = !!block.checked;
+        check.setAttribute('contenteditable', 'false');
         check.addEventListener('change', () => {
             syncTaskLinePresentation(line);
             saveMemoFromDom(ID);
@@ -308,11 +466,7 @@ function buildMemoLine(ID, block, index) {
 
     const content = document.createElement('div');
     content.className = 'app-line-content';
-    content.contentEditable = 'true';
-    content.spellcheck = false;
-    content.textContent = block.text || '';
-    content.addEventListener('input', () => onMemoLineInput(ID));
-    content.addEventListener('keydown', e => onMemoLineKeydown(e, ID));
+    content.textContent = block.text || MEMO_PLACEHOLDER;
 
     line.appendChild(content);
     if (block.type === 'task') {
@@ -328,6 +482,8 @@ function renderMemoEditor(ID) {
     const store = getMemoStore(ID);
     saveMemoStore(ID, store); // migration persistence
 
+    editor.contentEditable = 'true';
+    editor.spellcheck = false;
     editor.innerHTML = '';
     const blocks = normalizeBlocks(store.blocks);
     blocks.forEach((block, idx) => {
@@ -338,7 +494,40 @@ function renderMemoEditor(ID) {
 }
 
 function initMemoEditor(ID) {
+    bindMemoEditor(ID);
     renderMemoEditor(ID);
+    bindMemoMainInteractions(ID);
+}
+
+function bindMemoEditor(ID) {
+    const editor = document.getElementById(`txt${ID}`);
+    if (!editor || editor.dataset.editorBound) return;
+
+    editor.addEventListener('mousedown', e => {
+        const content = e.target.closest('.app-line-content');
+        if (content) return;
+
+        const line = e.target.closest('.app-line');
+        if (line) {
+            e.preventDefault();
+            const lineContent = line.querySelector('.app-line-content');
+            focusContentElement(lineContent, 'end');
+            return;
+        }
+
+        if (e.target === editor) {
+            e.preventDefault();
+            focusMemoEditorAtEnd(ID);
+        }
+    });
+
+    editor.addEventListener('focus', () => {
+        ensureEditorSelectionInContent(editor);
+    });
+
+    editor.addEventListener('input', () => onMemoEditorInput(ID));
+    editor.addEventListener('keydown', e => onMemoEditorKeydown(e, ID));
+    editor.dataset.editorBound = '1';
 }
 
 // Legacy compatibility: convert plain text updates into block data if old handlers call this.
