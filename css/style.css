@@ -1525,7 +1525,8 @@ body.theme-dark {
 
     .lw,
     .rw,
-    .ww {
+    .ww,
+    .widget-search-container {
         top: var(--tb-h);
         width: 100vw;
         height: calc(100dvh - var(--tb-h));
