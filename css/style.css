@@ -1219,15 +1219,15 @@ body.is-resizing-memo *{
     display: none;
     position: absolute;
     z-index: 111;
-    top: calc(var(--tb-h) + 16px);
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     width: min(920px, calc(100vw - 24px));
     height: min(650px, calc(100vh - var(--tb-h) - 32px));
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.16);
-    background: rgba(226, 224, 224, 0.232);
-    backdrop-filter: blur(8px);
+    background-color: var(--side-panel-bg);
+    backdrop-filter: blur(18px);
     color: #2d2d2d;
     overflow: hidden;
     box-shadow: 0 18px 40px rgba(0,0,0,0.24);
@@ -1252,10 +1252,10 @@ body.is-resizing-memo *{
     border-radius: 8px;
     padding: 8px 10px;
     font-size: .95em;
-    color: #6d6d6d;
+    color: var(--side-panel-muted-c);
     transition: background .15s, color .15s;
-    &:hover { background: rgba(0,0,0,0.06); color: #333; }
-    &.active { background: rgba(0,0,0,0.1); color: #111; }
+    &:hover { background: rgba(0,0,0,0.06); color: var(--side-panel-muted-c); }
+    &.active { background: rgba(0,0,0,0.1); color: var(--side-panel-muted-c); }
 }
 
 .bg-close-btn{
