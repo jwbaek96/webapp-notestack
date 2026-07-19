@@ -51,7 +51,7 @@ input, select, textarea{
 --tb-bgc:#1a0d7c10;
 --tb-c:#fff;
 --side-panel-bg: rgba(20, 18, 26, 0.475);
---side-panel-muted-c: #9d9d9d;
+--side-panel-muted-c: #c7c7c7;
 /* 사이드 나타나는 트렌지션 ------------------------------- */
 --side-transition: transform 1.5s ease;
 /* 좌측 손잡이 ------------------------------- */
@@ -131,7 +131,7 @@ body{
 }
 /* 스크린 zindex----------------------------------------------------------- */
 .tb{position: relative;z-index: 200;}
-main{position: relative;width: 100vw;height: calc(100vh - var(--tb-h) - var(--f-h));
+main{position: relative;width: 100vw;height: calc(100dvh - var(--tb-h) - var(--f-h));
     >.ws{position: relative;z-index: 0;top: 0;left: 0;width: 100%;height: 100%;}
     >.bs{position: absolute;z-index: 1;top: 0;left: 0;width: 100%;height: 100%;
         & .bx{position: absolute;}
@@ -245,13 +245,15 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     padding: 0 10px;
     border-radius: 5px;
     color: inherit;
+    text-shadow: var(--df-t-shdw);
     /* &:hover{ background-color: #ffffff2b; } */
 }
 
 .mini-calendar{
     display: none;
     position: absolute;
-    top: calc(100% + 6px);
+    /* top: calc(100% + 6px); */
+    top: var(--tb-h);
     left: 3px;
     width: 250px;
     padding: 10px;
@@ -296,7 +298,7 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
 .mini-cal-week span{
     text-align: center;
     font-size: .68em;
-    color: #9f9faa;
+    color: #d2d2d6;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.433);
 }
 
@@ -680,7 +682,7 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     background: rgba(255,255,255,0.07);
     border-radius: 8px;
     padding: 5px 10px;
-    & i { color: #888; font-size: .8em; }
+    & i { color: #a9a9a9; font-size: .8em; }
     & input {
         flex: 1;
         background: none;
@@ -1141,7 +1143,7 @@ body.is-resizing-memo *{
 }
 .rw-title{
     font-size: .82em;
-    color: #aaa;
+    color: #d6d6de;
     letter-spacing: .05em;
 }
 .rw-section-title{
@@ -1193,7 +1195,7 @@ body.is-resizing-memo *{
     border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.04);
-    color: #8a8a8a;
+    color: #a7a7a7;
     font-size: .8em;
     transition: background .15s, color .15s, border-color .15s;
     &:hover { background: rgba(255,255,255,0.1); color: #ddd; border-color: rgba(255,255,255,0.2); }
@@ -1439,6 +1441,7 @@ body.theme-dark {
 
         color: var(--tb-c);
         text-shadow: var(--df-t-shdw);
+        backdrop-filter: blur(8px);
         >.l, >.r{
             width: 100%; 
         }
@@ -1517,16 +1520,17 @@ body.theme-dark {
 
 @media (max-width: 500px) {
     main {
-        height: calc(100vh - var(--tb-h));
+        height: calc(100dvh - var(--tb-h));
     }
 
     .lw,
     .rw,
-    .ww {
+    .ww,
+    .widget-search-container {
         top: var(--tb-h);
         width: 100vw;
-        height: calc(100vh - var(--tb-h));
-        /* border-radius: 0; */
+        height: calc(100dvh - var(--tb-h));
+        border-radius: 0;
     }
 
     .lw {
@@ -1553,7 +1557,8 @@ body.theme-dark {
         top: auto;
         bottom: 10px;
         transform: translateX(0);
-        width: 40px;
+        /* width: 40px; */
+        width: 35px;
         height: 48px;
         left: 0;
         right: auto;
@@ -1575,10 +1580,11 @@ body.theme-dark {
         right: 0;
         width: min(240px, calc(100vw - 24px));
     }
-    
-    .bx.lw-focus-highlight {
-        box-shadow: none !important;
-    }
+
+    .bx {
+    & > .bx-view {
+        & .bx-main {
+            .app-editor {padding: 20px 25px 10px 25px;}}}}
 
     main > .bs > .bx {
         display: none;
