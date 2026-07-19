@@ -253,13 +253,13 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     display: none;
     position: absolute;
     /* top: calc(100% + 6px); */
-    top: var(--tb-h);
-    left: 3px;
+    top: calc(var(--tb-h) + 5px);
+    left:6px;
     width: 250px;
     padding: 10px;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(28, 28, 31, 0.5);
+    background: rgba(110, 110, 114, 0.5);
     color: #e9e9ec;
     backdrop-filter: blur(20px);
     box-shadow: 0 12px 24px rgba(0,0,0,0.28);
@@ -310,6 +310,10 @@ rotateZ90deg) -> rotateZ(180deg) *lw-door
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+}
+.mini-cal-cell:hover{
+    background: rgba(255,255,255,0.1);
 }
 
 .mini-cal-cell.muted{ color: #6d6d76; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
@@ -1222,7 +1226,8 @@ body.is-resizing-memo *{
     height: min(650px, calc(100vh - var(--tb-h) - 32px));
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.16);
-    background: rgba(236,236,236,0.95);
+    background: rgba(226, 224, 224, 0.232);
+    backdrop-filter: blur(8px);
     color: #2d2d2d;
     overflow: hidden;
     box-shadow: 0 18px 40px rgba(0,0,0,0.24);
@@ -1282,7 +1287,7 @@ body.is-resizing-memo *{
 }
 
 .bg-grid{
-    flex: 1;
+    /* flex: 1; */
     overflow-y: auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1400,7 +1405,7 @@ body.theme-dark {
     z-index: 100;
     top: calc(50vh + var(--tb-h) / 2);
     left: 0;
-    width: 18px;
+    width: 25px;
     height: 52px;
     transform: translateY(-50%);
 
@@ -1410,7 +1415,7 @@ body.theme-dark {
     border-radius: 0 8px 8px 0;
     border: 1px solid rgba(255,255,255,0.18);
     /* border-left: none; */
-    background-color: rgb(122 127 148 / 16%);
+    background-color: var(--tb-bgc);
     backdrop-filter: blur(8px);
     color: rgba(255,255,255,0.45);
     font-size: 9px;

@@ -530,7 +530,7 @@ function boxDragging(bxID, ID) {
   });
 
   box.style.zIndex = parseInt(boxes.length + 1, 10);
-  box.style.transform = 'scale(1.01)';
+  box.style.transform = 'scale(1.005)';
   document.body.classList.add('is-dragging-memo');
 
   const touch = event.type === 'touchstart' ? event.touches[0] : event;

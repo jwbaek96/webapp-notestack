@@ -53,7 +53,7 @@ function newBox() {
         left: `${centeredLeft}px`,
         statu: 'response',
         name: 'title',
-        showTitle: false,
+        showTitle: true,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         hidden: false,
