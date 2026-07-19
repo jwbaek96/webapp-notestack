@@ -54,6 +54,25 @@ function animateHideBox(ID) {
   const box = document.getElementById(`bx${ID}`);
   if (!box) return;
 
+    if (typeof box.animate === 'function') {
+    const anim = box.animate(
+      [
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: 'scale(0.02)', opacity: 0 }
+      ],
+      {
+        duration: 260,
+        easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+        fill: 'both'
+      }
+    );
+    anim.onfinish = () => {
+      box.style.transform = '';
+      box.style.opacity = '';
+    };
+    return;
+  }
+
   box.classList.remove('is-showing', 'is-pre-show');
   box.classList.add('is-hiding');
 
