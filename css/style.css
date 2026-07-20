@@ -1221,7 +1221,7 @@ body.is-resizing-memo *{
     z-index: 111;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, calc(-50% + var(--tb-h) ));
     width: min(920px, calc(100vw - 24px));
     height: min(650px, calc(100vh - var(--tb-h) - 32px));
     border-radius: 12px;
@@ -1295,13 +1295,13 @@ body.is-resizing-memo *{
 }
 
 .bg-card{
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.1);
+    background: #ffffffdd;
+    /* border: 1px solid rgba(0,0,0,0.1); */
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
     transition: transform .15s, border-color .15s;
-    &:hover { transform: translateY(-1px); border-color: rgba(0,0,0,0.3); }
+    /* &:hover {  } */
     &.active { border-color: #3a8bff; box-shadow: 0 0 0 1px #3a8bff inset; }
 }
 
@@ -1361,8 +1361,8 @@ body.is-resizing-memo *{
 @media (max-width: 680px) {
     .bg-modal{
         width: calc(100vw - 10px);
-        height: calc(100vh - var(--tb-h) - 12px);
-        top: calc(var(--tb-h) + 6px);
+        /* height: calc(100vh - var(--tb-h) - 12px); */
+        /* top: calc(var(--tb-h) + 6px); */
     }
     .bg-grid{
         grid-template-columns: repeat(2, 1fr);
@@ -1568,12 +1568,14 @@ body.theme-dark {
         left: 0;
         right: auto;
         border-radius: 0 8px 8px 0;
+        background-color: #4b556356;
         /* box-shadow: 0 4px 12px rgba(109, 109, 109, 0.3); */
+        &:hover{background-color: #4b556383;}
     }
 
     .lw-handle.open {
         transform: translateX(calc(100vw - 38px));
-        border-radius: 8px 0 0 8px;
+        /* border-radius: 8px 0 0 8px; */
     }
 
     .lw-pin-btn {
@@ -1585,6 +1587,7 @@ body.theme-dark {
         right: 0;
         width: min(240px, calc(100vw - 24px));
     }
+    .bg-modal{transform: translate(-50%,-50%);}
 
     .bx {
     & > .bx-view {
