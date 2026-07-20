@@ -57,7 +57,13 @@ const BG_STORE = 'backgrounds';
 
 const bgLibraryItems = [
     { id: 'light-default', name: 'Light 기본', path: 'assets/img/Light.png' },
-    { id: 'dark-default', name: 'Dark 기본', path: 'assets/img/Dark.png' }
+    { id: 'dark-default', name: 'Dark 기본', path: 'assets/img/Dark.png' },
+    { id: '2', name: 'Boliviainteligente', path: 'assets/img/stock/boliviainteligente-unsplash.jpg' },
+    { id: '4', name: 'Richard Horvath', path: 'assets/img/stock/richard-horvath-unsplash.jpg' },
+    { id: '3', name: 'Jack Anstey', path: 'assets/img/stock/jack-anstey-unsplash.jpg' },
+    { id: '1', name: 'Iswanto Arif', path: 'assets/img/stock/iswanto-arif-unsplash.jpg' },
+    { id: '6', name: 'Braden Jarvis', path: 'assets/img/stock/braden-jarvis-unsplash.jpg' },
+    { id: '5', name: 'Urban Vintage', path: 'assets/img/stock/urban-vintage-unsplash.jpg' }
 ];
 
 function memoRef(id) {
