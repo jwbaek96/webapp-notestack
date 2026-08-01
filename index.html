@@ -6,7 +6,7 @@
     <link rel="icon" href="favi.png">
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=20260801b">
+    <link rel="stylesheet" href="css/style.css?v=20260801c">
     <title>NoteStack</title>
 
 <!--[if gte mso 9]><xml>
@@ -77,7 +77,10 @@
             </div>
         </div>
         <!-- 섹션 헤더 -->
-        <div class="lw-section-title">메모들</div>
+        <div class="lw-section-title-row">
+            <div class="lw-section-title">메모들</div>
+            <button class="lw-visibility-btn" id="lw-all-visibility-btn" type="button" onclick="toggleAllSidebarMemosVisibility()" title="전체 메모 표시/숨김"></button>
+        </div>
         <!-- 메모 목록 -->
         <div class="lw-list" id="lw-list"></div>
         <div class="lw-create-actions">
@@ -117,6 +120,73 @@
                 <i class="fa-regular fa-image"></i>
                 <span>Background Image Settings</span>
             </button>
+        </div>
+        <div class="rw-section-title">clock display</div>
+        <div class="rw-clock-row" id="rw-clock-row">
+            <div class="rw-clock-format">
+                <span class="rw-clock-format-label">시간 형식</span>
+                <div class="rw-clock-format-options">
+                    <label class="rw-clock-format-option" for="clock-hour-format-12">
+                        <input type="radio" name="clock-hour-format" id="clock-hour-format-12" value="12">
+                        <span>12시간</span>
+                    </label>
+                    <label class="rw-clock-format-option" for="clock-hour-format-24">
+                        <input type="radio" name="clock-hour-format" id="clock-hour-format-24" value="24">
+                        <span>24시간</span>
+                    </label>
+                </div>
+            </div>
+            <div class="rw-clock-toggle-grid">
+                <label class="rw-clock-toggle-row" for="clock-setting-year">
+                    <span class="rw-clock-toggle-label">연도</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-year" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-month">
+                    <span class="rw-clock-toggle-label">월</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-month" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-day">
+                    <span class="rw-clock-toggle-label">일</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-day" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-weekday">
+                    <span class="rw-clock-toggle-label">요일</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-weekday" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-hour">
+                    <span class="rw-clock-toggle-label">시</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-hour" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-minute">
+                    <span class="rw-clock-toggle-label">분</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-minute" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+                <label class="rw-clock-toggle-row" for="clock-setting-second">
+                    <span class="rw-clock-toggle-label">초</span>
+                    <span class="widget-settings-switch">
+                        <input type="checkbox" id="clock-setting-second" class="widget-settings-toggle">
+                        <span class="widget-settings-switch-ui"></span>
+                    </span>
+                </label>
+            </div>
         </div>
         <div class="rw-section-title">data export/import</div>
         <div class="rw-backup-row">
@@ -169,11 +239,13 @@
             placeholder="https://example.com/image.jpg">
         <div class="bg-link-actions">
             <button class="bg-action-btn" onclick="applyBgLink()">링크 적용</button>
+            <button class="bg-action-btn" onclick="saveBgLink()">링크 저장</button>
         </div>
+        <div class="bg-link-saved" id="bg-link-saved-list"></div>
     </div>
 
     <div class="bg-modal-foot">
-        <button class="bg-remove-btn" onclick="clearCustomBackground()">제거</button>
+        <button class="bg-remove-btn" onclick="clearCustomBackground()">Default</button>
     </div>
 </section>
 <div class="ww">
@@ -267,12 +339,12 @@
     //
     
 </script>
-<script src="js/toolbar.js"></script>
-<script src="js/box-ctrl.js?v=20260717j"></script>
+<script src="js/toolbar.js?v=20260801a"></script>
+<script src="js/box-ctrl.js?v=20260801k"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
-    <script src="js/app.js?v=20260801f"></script>
+    <script src="js/app.js?v=20260801g"></script>
 <script src="js/box.js?v=20260801b"></script>
-<script src="js/sidebar.js?v=20260801a"></script>
+<script src="js/sidebar.js?v=20260801c"></script>
 
 <script src="https://kit.fontawesome.com/e4704dcbbd.js" crossorigin="anonymous"></script>
 </body>

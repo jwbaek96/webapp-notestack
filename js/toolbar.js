@@ -8,7 +8,18 @@ const widgetDotsEl = document.getElementById('widget-dots');
 const widgetSettingsBtnEl = document.getElementById('widget-settings-btn');
 const widgetSettingsPanelEl = document.getElementById('widget-settings-panel');
 const widgetSettingsListEl = document.getElementById('widget-settings-list');
+const clockHourFormatEls = document.querySelectorAll('input[name="clock-hour-format"]');
+const clockToggleEls = {
+    year: document.getElementById('clock-setting-year'),
+    month: document.getElementById('clock-setting-month'),
+    day: document.getElementById('clock-setting-day'),
+    weekday: document.getElementById('clock-setting-weekday'),
+    hour: document.getElementById('clock-setting-hour'),
+    minute: document.getElementById('clock-setting-minute'),
+    second: document.getElementById('clock-setting-second')
+};
 const WIDGET_SETTINGS_KEY = 'widget-search-settings-v1';
+const CLOCK_SETTINGS_KEY = 'toolbar-clock-settings-v1';
 const WIDGET_ENGINES = {
     google: '구글',
     naver: '네이버',
@@ -20,37 +31,133 @@ let widgetSettings = {
     order: ['google', 'naver', 'youtube'],
     enabled: { google: true, naver: true, youtube: true }
 };
+let clockSettings = getDefaultClockSettings();
 
 const miniCalState = (() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
 })();
 
-function getTime() {
-    const date = new Date();
-    let h = String(date.getHours());
-    if (date.getHours() < 13) {
-        h = `AM ${h}`;
-    } else if (date.getHours() == 24) {
-        h = `AM 00`;
-    } else {
-        h = `PM ${h - 12}`;
+function getDefaultClockSettings() {
+    return {
+        show: {
+            year: false,
+            month: false,
+            day: false,
+            weekday: true,
+            hour: true,
+            minute: true,
+            second: false
+        },
+        hourFormat: '12'
+    };
+}
+
+function normalizeClockSettings(raw) {
+    const defaults = getDefaultClockSettings();
+    const fields = Object.keys(defaults.show);
+    const show = { ...defaults.show };
+
+    fields.forEach(field => {
+        if (typeof raw?.show?.[field] === 'boolean') {
+            show[field] = raw.show[field];
+        }
+    });
+
+    const hourFormat = raw?.hourFormat === '24' ? '24' : '12';
+    return { show, hourFormat };
+}
+
+function loadClockSettings() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(CLOCK_SETTINGS_KEY) || '{}');
+        clockSettings = normalizeClockSettings(parsed);
+    } catch (e) {
+        clockSettings = getDefaultClockSettings();
     }
-    const m = String(date.getMinutes()).padStart(2,"0");
-    const s = String(date.getSeconds()).padStart(2,"0");
-    
-    const wArrEN = new Array('Sun','Mon','Tue','Wed','Thur','Fri','Sat');
-    const wArrKR = new Array('일요일','월요일','화요일','수요일','목요일','금요일','토요일');
-    const mArr = new Array('January','February','March','April','May','June','July','August','September','October','November','December');
-    const D = String(date.getDate());
-    const M = date.getMonth();
-    const Y = String(date.getFullYear());
-    const DY = String(date.getDay());
+}
 
-    // const now = `${Y} ${mArr[M]} ${D} ${wArr[DY]} ${h}:${m}`
-    const now = `${Y}. ${M + 1}. ${D}. ${wArrKR[DY]} | ${h}:${m}:${s} `;
+function saveClockSettings() {
+    localStorage.setItem(CLOCK_SETTINGS_KEY, JSON.stringify(clockSettings));
+}
 
-    toptime.innerText = now.toUpperCase();
+function renderClockSettingsControls() {
+    Object.entries(clockToggleEls).forEach(([field, el]) => {
+        if (!el) return;
+        el.checked = !!clockSettings.show[field];
+    });
+
+    clockHourFormatEls.forEach(el => {
+        el.checked = el.value === clockSettings.hourFormat;
+    });
+}
+
+function setClockFieldEnabled(field, enabled) {
+    if (!Object.prototype.hasOwnProperty.call(clockSettings.show, field)) return;
+    clockSettings.show[field] = enabled;
+    saveClockSettings();
+    getTime();
+}
+
+function setClockHourFormat(mode) {
+    clockSettings.hourFormat = mode === '24' ? '24' : '12';
+    saveClockSettings();
+    getTime();
+}
+
+function initClockSettings() {
+    loadClockSettings();
+    renderClockSettingsControls();
+
+    Object.entries(clockToggleEls).forEach(([field, el]) => {
+        if (!el) return;
+        el.addEventListener('change', () => {
+            setClockFieldEnabled(field, el.checked);
+        });
+    });
+
+    clockHourFormatEls.forEach(el => {
+        el.addEventListener('change', () => {
+            if (!el.checked) return;
+            setClockHourFormat(el.value);
+        });
+    });
+
+    getTime();
+}
+
+function getTime() {
+    if (!toptime) return;
+
+    const date = new Date();
+    const show = clockSettings.show;
+    const weekdayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+    const dateParts = [];
+    if (show.year) dateParts.push(`${date.getFullYear()}년`);
+    if (show.month) dateParts.push(`${date.getMonth() + 1}월`);
+    if (show.day) dateParts.push(`${date.getDate()}일`);
+    if (show.weekday) dateParts.push(weekdayNames[date.getDay()]);
+
+    const timeParts = [];
+    if (show.hour) {
+        if (clockSettings.hourFormat === '24') {
+            timeParts.push(String(date.getHours()).padStart(2, '0'));
+        } else {
+            const hours = date.getHours();
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const hour12 = hours % 12 || 12;
+            timeParts.push(`${period} ${hour12}`);
+        }
+    }
+    if (show.minute) timeParts.push(String(date.getMinutes()).padStart(2, '0'));
+    if (show.second) timeParts.push(String(date.getSeconds()).padStart(2, '0'));
+
+    const dateText = dateParts.join(' ');
+    const timeText = timeParts.join(':');
+    const now = [dateText, timeText].filter(Boolean).join(' ').trim();
+
+    toptime.textContent = now;
 }
 
 function renderMiniCalendar() {
@@ -389,7 +496,7 @@ document.addEventListener('keydown', e => {
 //    
 //     today.innerText = `${d} ${mArr[m]} ${y} ${wArr[dy]}`;
 // }
-getTime();
+initClockSettings();
 setInterval(getTime, 1000);
 initWidgetSwipe();
 initWidgetSearchClear();

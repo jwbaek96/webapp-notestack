@@ -54,8 +54,10 @@ function updateRightBackdropsOffset() {
 const BG_DB_NAME = 'macnote-assets';
 const BG_DB_VERSION = 1;
 const BG_STORE = 'backgrounds';
+const BG_LINKS_KEY = 'bg-link-bookmarks-v1';
 const BACKUP_FILE_KIND = 'notestack-backup';
 const BACKUP_FILE_VERSION = 1;
+let savedBgLinks = [];
 
 const bgLibraryItems = [
     { id: 'light-default', name: 'Light 기본', path: 'assets/img/Light.png' },
@@ -664,6 +666,101 @@ function toggleLwPreview() {
     renderSidebar();
 }
 
+function getAllSidebarMemoIds() {
+    return (Array.isArray(bxArr) ? bxArr : []).map(obj => obj.id).filter(Number.isFinite);
+}
+
+function getFolderMemoIds(folderId) {
+    const folder = lwTree.folders?.[folderId];
+    if (!folder || !Array.isArray(folder.items)) return [];
+    return folder.items
+        .map(ref => parseRef(ref))
+        .filter(parsed => parsed && parsed.type === 'memo')
+        .map(parsed => parsed.id);
+}
+
+function countVisibleMemoIds(ids) {
+    return ids.reduce((count, id) => {
+        const memo = bxArr.find(obj => obj.id === id);
+        return count + (memo && !memo.hidden ? 1 : 0);
+    }, 0);
+}
+
+function isOnlyMemoSetVisible(targetIds) {
+    const targetSet = new Set(targetIds);
+    let hasTargetVisible = false;
+
+    for (const memo of (Array.isArray(bxArr) ? bxArr : [])) {
+        const isVisible = !memo.hidden;
+        const isTarget = targetSet.has(memo.id);
+        if (isTarget && isVisible) hasTargetVisible = true;
+        if (!isTarget && isVisible) return false;
+    }
+
+    return hasTargetVisible;
+}
+
+function updateSidebarVisibilityButton(button, visibleCount, totalCount, title) {
+    if (!button) return;
+
+    const iconClass = visibleCount === 0
+        ? 'fa-eye-slash'
+        : (visibleCount < totalCount ? 'fa-eye-low-vision' : 'fa-eye');
+
+    button.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+    button.classList.toggle('is-dimmed', visibleCount < totalCount);
+    if (title) button.title = title;
+    button.setAttribute('aria-label', title || '메모 표시 상태 변경');
+}
+
+function updateAllSidebarVisibilityButton() {
+    const button = document.getElementById('lw-all-visibility-btn');
+    if (!button) return;
+    const ids = getAllSidebarMemoIds();
+    const visibleCount = countVisibleMemoIds(ids);
+    updateSidebarVisibilityButton(button, visibleCount, ids.length, '전체 메모 표시/숨김');
+}
+
+function toggleAllSidebarMemosVisibility() {
+    const ids = getAllSidebarMemoIds();
+    if (!ids.length || typeof setBulkMemoHiddenState !== 'function') return;
+    const visibleCount = countVisibleMemoIds(ids);
+    setBulkMemoHiddenState(ids, visibleCount > 0);
+}
+
+function toggleFolderMemoVisibility(folderId) {
+    const ids = getFolderMemoIds(folderId);
+    if (!ids.length || typeof setBulkMemoHiddenState !== 'function') return;
+    const visibleCount = countVisibleMemoIds(ids);
+    setBulkMemoHiddenState(ids, visibleCount > 0);
+}
+
+function toggleFolderOnlyVisible(folderId) {
+    if (typeof setBulkMemoHiddenState !== 'function') return;
+    const folderIds = getFolderMemoIds(folderId);
+    if (!folderIds.length) return;
+
+    if (isOnlyMemoSetVisible(folderIds)) {
+        setBulkMemoHiddenState(getAllSidebarMemoIds(), false);
+        return;
+    }
+
+    const folderSet = new Set(folderIds);
+    const showIds = [];
+    const hideIds = [];
+
+    (Array.isArray(bxArr) ? bxArr : []).forEach(memo => {
+        if (folderSet.has(memo.id)) {
+            showIds.push(memo.id);
+        } else {
+            hideIds.push(memo.id);
+        }
+    });
+
+    setBulkMemoHiddenState(showIds, false, { skipSidebar: true });
+    setBulkMemoHiddenState(hideIds, true);
+}
+
 function togglePin() {
     if (typeof isMobileViewport === 'function' && isMobileViewport()) {
         lwPinned = false;
@@ -697,6 +794,8 @@ function togglePin() {
 function renderSidebar() {
     const listEl = document.getElementById('lw-list');
     if (!listEl) return;
+
+    updateAllSidebarVisibilityButton();
 
     listEl.className = 'lw-list';
     listEl.innerHTML = '';
@@ -768,6 +867,9 @@ function renderSidebar() {
             const folderEl = document.createElement('div');
             folderEl.className = 'lw-list-item lw-folder-item';
             folderEl.dataset.ref = ref;
+            const folderMemoIds = getFolderMemoIds(folder.id);
+            const folderVisibleCount = countVisibleMemoIds(folderMemoIds);
+            const folderOnlyActive = folderMemoIds.length > 0 && isOnlyMemoSetVisible(folderMemoIds);
             folderEl.innerHTML = `
                 <button class="lw-folder-toggle" onclick="event.stopPropagation(); toggleFolderCollapsed('${folder.id}')">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -777,6 +879,9 @@ function renderSidebar() {
                     <span class="lw-item-title">${folder.name}</span>
                 </div>
                 <div class="lw-folder-actions">
+                    <button class="lw-visibility-btn lw-folder-visibility-btn${folderVisibleCount < folderMemoIds.length ? ' is-dimmed' : ''}" type="button" title="클릭: 폴더 메모 표시/숨김, 더블클릭: 이 폴더만 보기">
+                        <i class="fa-solid ${folderVisibleCount === 0 ? 'fa-eye-slash' : (folderVisibleCount < folderMemoIds.length ? 'fa-eye-low-vision' : (folderOnlyActive ? 'fa-eye' : 'fa-eye'))}"></i>
+                    </button>
                     <button class="lw-folder-act" onclick="event.stopPropagation(); sidebarRenameFolder('${folder.id}')" title="폴더 이름 변경">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </button>
@@ -789,6 +894,25 @@ function renderSidebar() {
                 if (shouldIgnoreSidebarItemClick()) return;
                 toggleFolderCollapsed(folder.id);
             });
+            const folderVisibilityBtn = folderEl.querySelector('.lw-folder-visibility-btn');
+            if (folderVisibilityBtn) {
+                let clickTimer = null;
+                folderVisibilityBtn.addEventListener('click', event => {
+                    event.stopPropagation();
+                    clickTimer = setTimeout(() => {
+                        clickTimer = null;
+                        toggleFolderMemoVisibility(folder.id);
+                    }, 180);
+                });
+                folderVisibilityBtn.addEventListener('dblclick', event => {
+                    event.stopPropagation();
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                        clickTimer = null;
+                    }
+                    toggleFolderOnlyVisible(folder.id);
+                });
+            }
             folderEl.classList.toggle('is-collapsed', folder.collapsed && !hasQuery);
             makeListDnDHandlers(folderEl, ref, null, 'folder');
             listEl.appendChild(folderEl);
@@ -958,6 +1082,7 @@ function openBgModal() {
     document.getElementById('bg-modal-back').classList.add('open');
     switchBgTab(currentBgTab);
     renderBgLibrary('');
+    renderSavedBgLinks();
     pushPanelHistory();
 }
 
@@ -974,6 +1099,105 @@ function switchBgTab(tab) {
         if (btn) btn.classList.toggle('active', name === tab);
         if (panel) panel.classList.toggle('dpnone', name !== tab);
     });
+    if (tab === 'link') {
+        renderSavedBgLinks();
+    }
+}
+
+function normalizeSavedBgLinks(raw) {
+    if (!Array.isArray(raw)) return [];
+    const unique = [];
+    const seen = new Set();
+    raw.forEach(url => {
+        if (typeof url !== 'string') return;
+        const link = url.trim();
+        if (!link || seen.has(link)) return;
+        seen.add(link);
+        unique.push(link);
+    });
+    return unique.slice(0, 30);
+}
+
+function loadSavedBgLinks() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(BG_LINKS_KEY) || '[]');
+        savedBgLinks = normalizeSavedBgLinks(parsed);
+    } catch (e) {
+        savedBgLinks = [];
+    }
+}
+
+function saveSavedBgLinks() {
+    localStorage.setItem(BG_LINKS_KEY, JSON.stringify(savedBgLinks));
+}
+
+function renderSavedBgLinks() {
+    const listEl = document.getElementById('bg-link-saved-list');
+    if (!listEl) return;
+
+    if (!savedBgLinks.length) {
+        listEl.innerHTML = '<div class="bg-link-empty">저장된 링크가 없습니다.</div>';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    savedBgLinks.forEach((link, index) => {
+        const row = document.createElement('div');
+        row.className = 'bg-link-item';
+
+        const url = document.createElement('div');
+        url.className = 'bg-link-item-url';
+        url.textContent = link;
+        url.title = link;
+
+        const actions = document.createElement('div');
+        actions.className = 'bg-link-item-actions';
+
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'bg-link-item-btn';
+        applyBtn.type = 'button';
+        applyBtn.textContent = '적용';
+        applyBtn.addEventListener('click', () => {
+            const input = document.getElementById('bg-link-input');
+            if (input) input.value = link;
+            applyBgLink(link);
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'bg-link-item-btn';
+        delBtn.type = 'button';
+        delBtn.textContent = '삭제';
+        delBtn.addEventListener('click', () => {
+            removeSavedBgLink(index);
+        });
+
+        actions.appendChild(applyBtn);
+        actions.appendChild(delBtn);
+        row.appendChild(url);
+        row.appendChild(actions);
+        listEl.appendChild(row);
+    });
+}
+
+function removeSavedBgLink(index) {
+    if (index < 0 || index >= savedBgLinks.length) return;
+    savedBgLinks.splice(index, 1);
+    saveSavedBgLinks();
+    renderSavedBgLinks();
+}
+
+function getBgLinkInputValue() {
+    const input = document.getElementById('bg-link-input');
+    return input ? input.value.trim() : '';
+}
+
+function isValidUrl(link) {
+    try {
+        new URL(link);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 function renderBgLibrary(query = '') {
@@ -1029,15 +1253,11 @@ async function handleBgUpload(event) {
     event.target.value = '';
 }
 
-async function applyBgLink() {
-    const input = document.getElementById('bg-link-input');
-    if (!input) return;
-    const link = input.value.trim();
+async function applyBgLink(linkOverride) {
+    const link = typeof linkOverride === 'string' ? linkOverride.trim() : getBgLinkInputValue();
     if (!link) return;
 
-    try {
-        new URL(link);
-    } catch (e) {
+    if (!isValidUrl(link)) {
         alert('올바른 URL 형식이 아닙니다.');
         return;
     }
@@ -1052,6 +1272,19 @@ async function applyBgLink() {
         source: 'link',
         updatedAt: Date.now()
     });
+}
+
+function saveBgLink() {
+    const link = getBgLinkInputValue();
+    if (!link) return;
+    if (!isValidUrl(link)) {
+        alert('올바른 URL 형식이 아닙니다.');
+        return;
+    }
+
+    savedBgLinks = normalizeSavedBgLinks([link, ...savedBgLinks]);
+    saveSavedBgLinks();
+    renderSavedBgLinks();
 }
 
 function clearCustomBackground() {
@@ -1331,6 +1564,7 @@ function loadTheme() {
 }
 
 loadTheme();
+loadSavedBgLinks();
 loadBackgroundSetting();
 loadLwSettings();
 loadLwTree();

@@ -285,6 +285,56 @@ function bxM(ID) {
   if (typeof renderSidebar === 'function') renderSidebar();
 }
 
+function setMemoHiddenState(ID, hidden, options = {}) {
+  const obj = bxArr.find(i => i.id === ID);
+  if (!obj) return false;
+
+  const shouldHide = !!hidden;
+  if (!!obj.hidden === shouldHide) return false;
+
+  obj.hidden = shouldHide;
+  touchMemoUpdatedAt(ID);
+
+  const btn = document.getElementById(`bxM${ID}`);
+  if (btn) btn.classList.toggle('active', shouldHide);
+
+  if (shouldHide) {
+    animateHideBox(ID);
+  } else {
+    animateShowFromSidebar(ID);
+    applyBoxLayoutByState(ID);
+  }
+
+  renderMemoMeta(ID);
+
+  if (!options.skipSave) {
+    saveBxArr();
+  }
+  if (!options.skipSidebar && typeof renderSidebar === 'function') {
+    renderSidebar();
+  }
+  return true;
+}
+
+function setBulkMemoHiddenState(ids, hidden, options = {}) {
+  const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(id => Number(id)).filter(Number.isFinite))];
+  let changed = false;
+
+  uniqueIds.forEach(ID => {
+    const didChange = setMemoHiddenState(ID, hidden, { skipSave: true, skipSidebar: true });
+    if (didChange) changed = true;
+  });
+
+  if (!changed) return false;
+
+  if (typeof applyMobileMemoLayout === 'function') applyMobileMemoLayout();
+  saveBxArr();
+  if (!options.skipSidebar && typeof renderSidebar === 'function') {
+    renderSidebar();
+  }
+  return true;
+}
+
 //박스 삭제**********
 function bxX(ID) {
   const popup = document.getElementById(`bxDelConfirm${ID}`);

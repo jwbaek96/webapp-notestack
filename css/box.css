@@ -504,7 +504,9 @@
 .floating-editor-toolbar{
     position: fixed;
     left: 50%;
-    bottom: 18px;
+    --floating-toolbar-base-bottom: 18px;
+    --floating-toolbar-vv-offset: 0px;
+    bottom: calc(var(--floating-toolbar-base-bottom) + var(--floating-toolbar-vv-offset));
     transform: translateX(-50%) translateY(calc(100% + 20px));
     z-index: 220;
     display: flex;
@@ -552,7 +554,7 @@
 
 @media (max-width: 500px) {
     .floating-editor-toolbar{
-        bottom: 12px;
+        --floating-toolbar-base-bottom: 12px;
         /* width: calc(100vw - 18px); */
         overflow-x: auto;
         justify-content: flex-start;

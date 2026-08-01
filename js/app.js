@@ -2,6 +2,45 @@ const memoEditors = new Map();
 let activeMemoEditorId = null;
 let floatingToolbarReady = false;
 let floatingToolbarHideTimer = null;
+let floatingToolbarViewportBound = false;
+
+function updateFloatingToolbarViewportOffset() {
+    const toolbar = document.getElementById('floating-editor-toolbar');
+    if (!toolbar) return;
+
+    if (!window.visualViewport) {
+        toolbar.style.setProperty('--floating-toolbar-vv-offset', '0px');
+        return;
+    }
+
+    const vv = window.visualViewport;
+    const overlap = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
+    toolbar.style.setProperty('--floating-toolbar-vv-offset', `${overlap}px`);
+}
+
+function bindFloatingToolbarViewportOffset() {
+    if (floatingToolbarViewportBound) return;
+
+    let rafId = 0;
+    const requestUpdate = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+            rafId = 0;
+            updateFloatingToolbarViewportOffset();
+        });
+    };
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', requestUpdate, { passive: true });
+        window.visualViewport.addEventListener('scroll', requestUpdate, { passive: true });
+    }
+
+    window.addEventListener('resize', requestUpdate, { passive: true });
+    window.addEventListener('orientationchange', requestUpdate, { passive: true });
+
+    floatingToolbarViewportBound = true;
+    requestUpdate();
+}
 
 function createDefaultMemoStore() {
     return {
@@ -241,6 +280,7 @@ function showFloatingToolbar() {
     const toolbar = document.getElementById('floating-editor-toolbar');
     if (!toolbar) return;
     clearFloatingToolbarHideTimer();
+    updateFloatingToolbarViewportOffset();
     toolbar.classList.add('is-visible');
 }
 
@@ -343,6 +383,7 @@ function bindFloatingToolbar() {
 
     const toolbar = document.getElementById('floating-editor-toolbar');
     if (!toolbar) return;
+    bindFloatingToolbarViewportOffset();
     const icons = (typeof Quill !== 'undefined' && Quill.import) ? Quill.import('ui/icons') : null;
 
     if (icons) {
