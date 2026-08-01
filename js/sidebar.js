@@ -54,6 +54,8 @@ function updateRightBackdropsOffset() {
 const BG_DB_NAME = 'macnote-assets';
 const BG_DB_VERSION = 1;
 const BG_STORE = 'backgrounds';
+const BACKUP_FILE_KIND = 'notestack-backup';
+const BACKUP_FILE_VERSION = 1;
 
 const bgLibraryItems = [
     { id: 'light-default', name: 'Light 기본', path: 'assets/img/Light.png' },
@@ -1149,6 +1151,165 @@ async function getBackgroundBlob(id) {
         req.onsuccess = () => resolve(req.result ? req.result.blob : null);
         req.onerror = () => reject(req.error);
     });
+}
+
+function setBackupStatus(message, isError = false) {
+    const el = document.getElementById('rw-backup-status');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.toggle('is-error', !!isError);
+}
+
+function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+    });
+}
+
+function dataUrlToBlob(dataUrl) {
+    const parts = String(dataUrl || '').split(',');
+    if (parts.length < 2) return new Blob([]);
+    const mimeMatch = parts[0].match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const binary = atob(parts[1]);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mime });
+}
+
+function snapshotLocalStorage() {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        data[key] = localStorage.getItem(key);
+    }
+    return data;
+}
+
+async function readAllBackgroundRecords() {
+    const db = await openBgDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(BG_STORE, 'readonly');
+        const store = tx.objectStore(BG_STORE);
+        const req = store.getAll();
+        req.onsuccess = async () => {
+            try {
+                const rows = req.result || [];
+                const serialized = await Promise.all(rows.map(async row => ({
+                    id: row.id,
+                    mime: row.mime || row.blob?.type || 'application/octet-stream',
+                    createdAt: row.createdAt || Date.now(),
+                    dataUrl: row.blob ? await blobToDataUrl(row.blob) : ''
+                })));
+                resolve(serialized);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function replaceBackgroundRecords(records = []) {
+    const db = await openBgDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(BG_STORE, 'readwrite');
+        const store = tx.objectStore(BG_STORE);
+        const clearReq = store.clear();
+        clearReq.onerror = () => reject(clearReq.error);
+        clearReq.onsuccess = () => {
+            records.forEach(row => {
+                store.put({
+                    id: row.id,
+                    mime: row.mime || 'application/octet-stream',
+                    createdAt: row.createdAt || Date.now(),
+                    blob: dataUrlToBlob(row.dataUrl || '')
+                });
+            });
+        };
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+function downloadBackupFile(fileName, text) {
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    setBackupStatus('백업 데이터 파일을 다운로드했습니다.');
+}
+
+async function exportAppBackup() {
+    try {
+        setBackupStatus('백업 데이터 파일 생성 중...');
+        const payload = {
+            kind: BACKUP_FILE_KIND,
+            version: BACKUP_FILE_VERSION,
+            exportedAt: new Date().toISOString(),
+            localStorage: snapshotLocalStorage(),
+            backgrounds: await readAllBackgroundRecords()
+        };
+
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        downloadBackupFile(`notestack-backup-${stamp}.json`, JSON.stringify(payload, null, 2));
+        setBackupStatus('백업 데이터 파일을 다운로드했습니다.');
+    } catch (error) {
+        console.error('exportAppBackup error:', error);
+        setBackupStatus('백업 데이터 파일 생성에 실패했습니다.', true);
+    }
+}
+
+function triggerBackupImport() {
+    const input = document.getElementById('backup-import-input');
+    if (!input) return;
+    input.value = '';
+    input.click();
+}
+
+async function handleBackupImport(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const ok = confirm('현재 메모와 설정을 데이터 파일 내용으로 덮어씁니다. 계속할까요?');
+    if (!ok) {
+        event.target.value = '';
+        return;
+    }
+
+    try {
+        setBackupStatus('백업 데이터 복원 중...');
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        if (!payload || payload.kind !== BACKUP_FILE_KIND || !payload.localStorage || typeof payload.localStorage !== 'object') {
+            throw new Error('invalid backup file');
+        }
+
+        localStorage.clear();
+        Object.entries(payload.localStorage).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+        });
+
+        await replaceBackgroundRecords(Array.isArray(payload.backgrounds) ? payload.backgrounds : []);
+        setBackupStatus('백업 데이터 복원 완료. 페이지를 새로고침합니다.');
+        window.location.reload();
+    } catch (error) {
+        console.error('handleBackupImport error:', error);
+        setBackupStatus('백업 데이터 복원에 실패했습니다. 파일 형식을 확인해주세요.', true);
+    } finally {
+        event.target.value = '';
+    }
 }
 
 // =============================================

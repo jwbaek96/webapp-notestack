@@ -48,7 +48,7 @@ function getTime() {
     const DY = String(date.getDay());
 
     // const now = `${Y} ${mArr[M]} ${D} ${wArr[DY]} ${h}:${m}`
-    const now = `${wArrKR[DY]} ${h}:${m}`
+    const now = `${Y}. ${M + 1}. ${D}. ${wArrKR[DY]} | ${h}:${m}:${s} `;
 
     toptime.innerText = now.toUpperCase();
 }

@@ -1,4 +1,4 @@
-@import url("box.css?v=20260717d");
+@import url("box.css?v=20260801b");
 /* @import url(./set-screen.css); */
 @font-face {
     font-family: 'jalnan';
@@ -1205,6 +1205,45 @@ body.is-resizing-memo *{
     &:hover { background: rgba(255,255,255,0.1); color: #ddd; border-color: rgba(255,255,255,0.2); }
 }
 
+.rw-backup-row{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 10px;
+}
+
+.rw-backup-btn{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #d0d0d7;
+    font-size: .8em;
+    transition: background .15s, color .15s, border-color .15s;
+    &:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+}
+
+.rw-backup-note{
+    font-size: .72em;
+    line-height: 1.45;
+    color: #9090a0;
+}
+
+.rw-backup-status{
+    min-height: 18px;
+    font-size: .72em;
+    color: #c8c8d6;
+}
+
+.rw-backup-status.is-error{
+    color: #ff8f8f;
+}
+
 .bg-modal-back{
     display: none;
     position: absolute;
@@ -1560,16 +1599,19 @@ body.theme-dark {
 
     .lw-handle {
         top: auto;
-        bottom: 10px;
         transform: translateX(0);
+        bottom: 12px;
         /* width: 40px; */
         width: 35px;
-        height: 48px;
+        height: 41px;
         left: 0;
         right: auto;
         border-radius: 0 8px 8px 0;
-        background-color: #4b556356;
+        /* background-color: #4b556356; */
+        background-color: #4b55639c;
         /* box-shadow: 0 4px 12px rgba(109, 109, 109, 0.3); */
+        box-shadow: 0 16px 30px rgba(0,0,0,0.22);
+        
         &:hover{background-color: #4b556383;}
     }
 
@@ -1592,7 +1634,7 @@ body.theme-dark {
     .bx {
     & > .bx-view {
         & .bx-main {
-            .app-editor {padding: 20px 25px 10px 25px;}}}}
+            .app-editor {padding: 5px 25px 10px 7px;}}}}
 
     main > .bs > .bx {
         display: none;

@@ -160,7 +160,9 @@ function addNewBox(obj) {
         </div>
         <div class="bx-main" id="main${ID}">
             <div class="bx-txt">
-                <div class="app-editor" id="txt${ID}"></div>
+                <div class="app-editor-wrap">
+                    <div class="app-editor" id="txt${ID}"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -173,6 +175,7 @@ function addNewBox(obj) {
         linkContent:[],
         taskContent:[],
         textContent: "",
+        htmlContent: "",
         blocks: [{ type: 'text', text: '' }],
         hidden: false
     }
@@ -385,7 +388,9 @@ function printBx(obj){
         </div>
         <div class="bx-main" id="main${ID}">
             <div class="bx-txt">
-                <div class="app-editor" id="txt${ID}"></div>
+                <div class="app-editor-wrap">
+                    <div class="app-editor" id="txt${ID}"></div>
+                </div>
             </div>
         </div>
     </section>

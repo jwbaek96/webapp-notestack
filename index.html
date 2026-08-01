@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" href="favi.png">
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=20260717e">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=20260801b">
     <title>NoteStack</title>
 
 <!--[if gte mso 9]><xml>
@@ -117,6 +118,20 @@
                 <span>Background Image Settings</span>
             </button>
         </div>
+        <div class="rw-section-title">data export/import</div>
+        <div class="rw-backup-row">
+            <button class="rw-backup-btn" id="btn-backup-export" onclick="exportAppBackup()">
+                <i class="fa-solid fa-download"></i>
+                <span>Data Export</span>
+            </button>
+            <button class="rw-backup-btn" id="btn-backup-import" onclick="triggerBackupImport()">
+                <i class="fa-solid fa-upload"></i>
+                <span>Data Import</span>
+            </button>
+            <input type="file" id="backup-import-input" accept="application/json,.json" class="dpnone" onchange="handleBackupImport(event)">
+            <p class="rw-backup-note">메모, 폴더, 테마, 위젯 설정, 배경 설정과 업로드 배경까지 JSON으로 저장/복원합니다.</p>
+            <p class="rw-backup-status" id="rw-backup-status"></p>
+        </div>
     </div>
 </div>
 
@@ -226,6 +241,22 @@
     <div class="ws"></div>
     <div class="bs" onclick="bsClick()"></div>
 </main>
+<div class="floating-editor-toolbar ql-toolbar ql-snow" id="floating-editor-toolbar" aria-label="메모 서식 도구">
+    <span class="ql-formats">
+        <button class="ql-align" id="floating-ql-align-left" type="button" data-align=""></button>
+        <button class="ql-align" id="floating-ql-align-center" type="button" data-align="center"></button>
+        <button class="ql-align" id="floating-ql-align-right" type="button" data-align="right"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-bold" id="floating-ql-bold" type="button"></button>
+        <button class="ql-italic" id="floating-ql-italic" type="button"></button>
+        <button class="ql-underline" id="floating-ql-underline" type="button"></button>
+        <button class="ql-strike" id="floating-ql-strike" type="button"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-list" id="floating-ql-check" value="check" type="button"></button>
+    </span>
+</div>
 <!-- <footer></footer> -->
 
 <!-- 스크립트 ---------------------- -->
@@ -238,9 +269,10 @@
 </script>
 <script src="js/toolbar.js"></script>
 <script src="js/box-ctrl.js?v=20260717j"></script>
-<script src="js/app.js?v=20260717e"></script>
-<script src="js/box.js?v=20260717e"></script>
-<script src="js/sidebar.js?v=20260717g"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+    <script src="js/app.js?v=20260801f"></script>
+<script src="js/box.js?v=20260801b"></script>
+<script src="js/sidebar.js?v=20260801a"></script>
 
 <script src="https://kit.fontawesome.com/e4704dcbbd.js" crossorigin="anonymous"></script>
 </body>
