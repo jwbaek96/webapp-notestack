@@ -131,7 +131,9 @@ body{
 }
 /* 스크린 zindex----------------------------------------------------------- */
 .tb{position: relative;z-index: 200;}
-main{position: relative;width: 100vw;height: calc(100dvh - var(--tb-h) - var(--f-h));
+main{position: relative;width: 100vw;
+    height: calc(100dvh - (var(--tb-h)*4));
+    /* height: calc(100dvh - var(--tb-h) - var(--f-h)); */
     >.ws{position: relative;z-index: 0;top: 0;left: 0;width: 100%;height: 100%;}
     >.bs{position: absolute;z-index: 1;top: 0;left: 0;width: 100%;height: 100%;
         & .bx{position: absolute;}
